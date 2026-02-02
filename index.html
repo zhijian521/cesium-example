@@ -1,14 +1,280 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Cesium 学习笔记</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Noto Serif SC", "Songti SC", "SimSun", serif;
+            background: #f5f0e6 url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            color: #2c241b;
+            line-height: 1.9;
+            min-height: 100vh;
+            padding: 60px 20px;
+        }
+
+        .paper {
+            max-width: 680px;
+            margin: 0 auto;
+            background: #faf8f3;
+            padding: 60px 70px;
+            box-shadow:
+                0 1px 1px rgba(0, 0, 0, 0.05),
+                0 2px 2px rgba(0, 0, 0, 0.05),
+                0 4px 4px rgba(0, 0, 0, 0.05),
+                0 8px 8px rgba(0, 0, 0, 0.05);
+            position: relative;
+        }
+
+        /* 纸张边缘装饰 */
+        .paper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg,
+                    transparent 0%,
+                    rgba(139, 69, 19, 0.1) 20%,
+                    rgba(139, 69, 19, 0.15) 50%,
+                    rgba(139, 69, 19, 0.1) 80%,
+                    transparent 100%);
+        }
+
+        /* 印章装饰 */
+        .seal {
+            position: absolute;
+            top: 50px;
+            right: 60px;
+            width: 50px;
+            height: 50px;
+            border: 2px solid #c45c48;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c45c48;
+            font-size: 12px;
+            font-weight: 700;
+            transform: rotate(-5deg);
+            opacity: 0.8;
+            writing-mode: vertical-rl;
+            letter-spacing: 4px;
+            padding: 4px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1a1612;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: #7d6b5d;
+            font-size: 15px;
+            margin-bottom: 50px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #e0d5c5;
+        }
+
+        h2 {
+            font-size: 14px;
+            color: #8b7355;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2::before {
+            content: '◆';
+            font-size: 8px;
+            color: #c45c48;
+        }
+
+        /* 文章列表 */
+        .article {
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px dashed #e0d5c5;
+        }
+
+        .article:last-of-type {
+            border-bottom: none;
+        }
+
+        .article a {
+            color: #2c241b;
+            text-decoration: none;
+            font-size: 17px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+            transition: color 0.3s;
+        }
+
+        .article a:hover {
+            color: #8b4513;
+        }
+
+        .article a::before {
+            content: '「';
+            color: #c45c48;
+            margin-right: 2px;
+        }
+
+        .article a::after {
+            content: '」';
+            color: #c45c48;
+            margin-left: 2px;
+        }
+
+        .article p {
+            color: #5c4d3d;
+            font-size: 14px;
+            line-height: 1.7;
+            padding-left: 16px;
+            border-left: 2px solid #e0d5c5;
+        }
+
+        .date {
+            color: #999;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        /* 链接列表 */
+        .links {
+            list-style: none;
+        }
+
+        .links li {
+            margin-bottom: 12px;
+            position: relative;
+            padding-left: 16px;
+        }
+
+        .links li::before {
+            content: '·';
+            position: absolute;
+            left: 0;
+            color: #c45c48;
+            font-weight: bold;
+        }
+
+        .links a {
+            color: #4a4a4a;
+            text-decoration: none;
+            font-size: 15px;
+            transition: all 0.3s;
+            border-bottom: 1px solid transparent;
+        }
+
+        .links a:hover {
+            color: #8b4513;
+            border-bottom-color: #d4c4a8;
+        }
+
+        /* 竖排装饰文字 */
+        .side-text {
+            position: fixed;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            writing-mode: vertical-rl;
+            color: rgba(139, 69, 19, 0.15);
+            font-size: 18px;
+            letter-spacing: 8px;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        /* 页脚 */
+        footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #e0d5c5;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+
+        footer a {
+            color: #7d6b5d;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #8b4513;
+            text-decoration: underline;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .paper {
+                padding: 40px 30px;
+            }
+
+            .seal {
+                display: none;
+            }
+
+            .side-text {
+                display: none;
+            }
+
+            h1 {
+                font-size: 26px;
+            }
+        }
+    </style>    
 </head>
 
 <body>
+    <div class="paper">
+        <div class="seal">耶温<br>笔记</div>
 
+        <h1>Cesium 学习笔记</h1>
+        <p class="subtitle">记录三维地图开发的学习过程</p>
+
+        <h2>文章</h2>
+        <div class="article">
+            <a href="./example01/index.html">上海陆家嘴 3D 地图</a>
+            <p>飞机飞行动画、相机视角跟随、实时高度显示。<span class="date">2026年2月</span></p>
+        </div>
+
+        <h2>参考</h2>
+        <ul class="links">
+            <li><a href="https://cesium.com/learn/cesiumjs-learn/" target="_blank">Cesium 官方文档</a></li>
+            <li><a href="https://sandcastle.cesium.com/" target="_blank">Sandcastle 在线编辑器</a></li>
+            <li><a href="https://github.com/CesiumGS/cesium" target="_blank">GitHub 开源仓库</a></li>
+        </ul>
+
+        <footer>
+            <p>使用 <a href="https://cesium.com/" target="_blank">Cesium</a> 构建三维地球应用</p>
+        </footer>
+    </div>
+
+    <div class="side-text">纸上得来终觉浅</div>
 </body>
 
 </html>
