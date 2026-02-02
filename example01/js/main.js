@@ -7,6 +7,9 @@ let airplaneEntity;
 let pathEntity;
 let isCameraLocked = false;
 let infoPanelVisible = false;
+let airplaneEntities = [];
+let pathEntities = [];
+let selectedAirplaneIndex = 0; // 当前选中的飞机索引
 
 // 东方明珠位置
 const dongfangmingzhu = {
@@ -15,15 +18,29 @@ const dongfangmingzhu = {
     height: 600
 };
 
+// 滴水湖位置
+const dishuihu = {
+    lon: 121.935,
+    lat: 30.900,
+    height: 600
+};
+
+// 崇明岛位置
+const chongmingdao = {
+    lon: 121.75,
+    lat: 31.52,
+    height: 600
+};
+
 // 建筑着色器代码 - 浅色 + 动态灯光效果
 const BUILDING_SHADER = `
     void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
         float height = fsInput.attributes.positionMC.z;
-        
+
         // 基础颜色定义 - 带灰度的浅色
         vec3 baseColor;
         float glowStrength = 0.0;
-        
+
         if (height > 400.0) {
             baseColor = vec3(0.35, 0.55, 0.6); // 灰青色
             glowStrength = 0.4;
@@ -40,15 +57,15 @@ const BUILDING_SHADER = `
             baseColor = vec3(0.4, 0.4, 0.5); // 灰蓝色
             glowStrength = 0.2;
         }
-        
+
         // 获取时间用于动画 - 加快速度
         float time = float(czm_frameNumber) * 0.03;
-        
+
         // 灯光流动效果 - 从下往上的涌泉效果 (加快)
         float waveSpeed = 3.0;
         float waveHeight = mod(height * 0.015 - time * waveSpeed, 3.14159);
         float lightWave = sin(waveHeight) * 0.5 + 0.5;
-        
+
         // RGB渐变效果 - 随高度变化 (加快)
         vec3 rainbowColor;
         float hue = mod(height * 0.003 + time * 0.15, 1.0);
@@ -59,21 +76,21 @@ const BUILDING_SHADER = `
         } else {
             rainbowColor = mix(vec3(0.4, 0.4, 0.7), vec3(0.7, 0.4, 0.6), (hue - 0.66) * 3.0);
         }
-        
+
         // 边缘光效果
         vec3 vNormal = normalize(fsInput.attributes.normalEC);
         vec3 vView = normalize(-fsInput.attributes.positionEC);
         float rim = 1.0 - max(dot(vNormal, vView), 0.0);
         rim = pow(rim, 2.0);
-        
+
         // 混合颜色：基础色 + RGB渐变 + 灯光流动
         vec3 flowColor = mix(baseColor, rainbowColor, lightWave * 0.4);
         vec3 glowColor = flowColor * (1.0 + rim * glowStrength + lightWave * 0.3);
-        
+
         // 追加闪烁效果
         float flicker = sin(time * 3.0) * 0.05 + 0.95;
         glowColor *= flicker;
-        
+
         material.diffuse = glowColor;
         material.alpha = 0.85; // 稍微透明
     }
@@ -186,38 +203,33 @@ function createAirplaneAndPath() {
     viewer.clock.multiplier = 0.3; // 0.3倍速
     viewer.clock.shouldAnimate = true;
 
-    // 创建圆形航线
-    const centerLon = dongfangmingzhu.lon;
-    const centerLat = dongfangmingzhu.lat;
-    const radius = 0.015;
-    const flightHeight = 600;
+    // === 航线1: 东方明珠环线 ===
     const numPoints = 100;
-
-    const positionProperty = new Cesium.SampledPositionProperty();
-    positionProperty.setInterpolationOptions({
+    const positionProperty1 = new Cesium.SampledPositionProperty();
+    positionProperty1.setInterpolationOptions({
         interpolationDegree: 5,
         interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
     });
 
-    const pathPositions = [];
+    const pathPositions1 = [];
 
     for (let i = 0; i <= numPoints; i++) {
         const angle = (i / numPoints) * Math.PI * 2;
-        const lon = centerLon + radius * Math.cos(angle);
-        const lat = centerLat + radius * Math.sin(angle) * 0.85;
+        const lon = dongfangmingzhu.lon + 0.015 * Math.cos(angle);
+        const lat = dongfangmingzhu.lat + 0.015 * Math.sin(angle) * 0.85;
 
         const time = Cesium.JulianDate.addSeconds(startTime, (i / numPoints) * duration, new Cesium.JulianDate());
-        const position = Cesium.Cartesian3.fromDegrees(lon, lat, flightHeight);
+        const position = Cesium.Cartesian3.fromDegrees(lon, lat, dongfangmingzhu.height);
 
-        positionProperty.addSample(time, position);
-        pathPositions.push(Cesium.Cartesian3.fromDegrees(lon, lat, flightHeight));
+        positionProperty1.addSample(time, position);
+        pathPositions1.push(Cesium.Cartesian3.fromDegrees(lon, lat, dongfangmingzhu.height));
     }
 
-    // 创建航线
+    // 创建航线1
     pathEntity = viewer.entities.add({
-        name: '航线',
+        name: '东方明珠环线 - 航线',
         polyline: {
-            positions: pathPositions,
+            positions: pathPositions1,
             width: 3,
             material: new Cesium.PolylineGlowMaterialProperty({
                 glowPower: 0.2,
@@ -226,11 +238,12 @@ function createAirplaneAndPath() {
             clampToGround: false
         }
     });
+    pathEntities.push(pathEntity);
 
-    // 创建飞机
+    // 创建飞机1
     airplaneEntity = viewer.entities.add({
-        name: '飞机',
-        position: positionProperty,
+        name: '东方明珠环线 - 飞机',
+        position: positionProperty1,
         availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
             start: startTime,
             stop: stopTime
@@ -241,17 +254,91 @@ function createAirplaneAndPath() {
             minimumPixelSize: 50,
             maximumScale: 100
         },
-        orientation: new Cesium.VelocityOrientationProperty(positionProperty),
-
+        orientation: new Cesium.VelocityOrientationProperty(positionProperty1),
     });
+    airplaneEntities.push(airplaneEntity);
+
+    // === 航线2: 滴水湖到崇明岛（往返） ===
+    const numPoints2 = 1000; // 增加采样点，大幅降低速度（降低80%）
+    const positionProperty2 = new Cesium.SampledPositionProperty();
+    positionProperty2.setInterpolationOptions({
+        interpolationDegree: 5,
+        interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
+    });
+
+    const pathPositions2 = [];
+    const halfPoints = Math.floor(numPoints2 / 2);
+
+    // 去程：滴水湖 -> 崇明岛
+    for (let i = 0; i <= halfPoints; i++) {
+        const t = i / halfPoints;
+        const lon = dishuihu.lon + (chongmingdao.lon - dishuihu.lon) * t;
+        const lat = dishuihu.lat + (chongmingdao.lat - dishuihu.lat) * t;
+
+        const time = Cesium.JulianDate.addSeconds(startTime, (i / numPoints2) * duration, new Cesium.JulianDate());
+        const position = Cesium.Cartesian3.fromDegrees(lon, lat, 800);
+
+        positionProperty2.addSample(time, position);
+        pathPositions2.push(Cesium.Cartesian3.fromDegrees(lon, lat, 800));
+    }
+
+    // 返程：崇明岛 -> 滴水湖
+    for (let i = halfPoints; i <= numPoints2; i++) {
+        const t = (i - halfPoints) / (numPoints2 - halfPoints);
+        const lon = chongmingdao.lon + (dishuihu.lon - chongmingdao.lon) * t;
+        const lat = chongmingdao.lat + (dishuihu.lat - chongmingdao.lat) * t;
+
+        const time = Cesium.JulianDate.addSeconds(startTime, (i / numPoints2) * duration, new Cesium.JulianDate());
+        const position = Cesium.Cartesian3.fromDegrees(lon, lat, 800);
+
+        positionProperty2.addSample(time, position);
+        pathPositions2.push(Cesium.Cartesian3.fromDegrees(lon, lat, 800));
+    }
+
+    // 创建航线2
+    const pathEntity2 = viewer.entities.add({
+        name: '滴水湖到崇明岛 - 航线',
+        polyline: {
+            positions: pathPositions2,
+            width: 3,
+            material: new Cesium.PolylineGlowMaterialProperty({
+                glowPower: 0.2,
+                color: Cesium.Color.fromCssColorString('#4ECDC4').withAlpha(0.8)
+            }),
+            clampToGround: false
+        }
+    });
+    pathEntities.push(pathEntity2);
+
+    // 创建飞机2
+    const airplaneEntity2 = viewer.entities.add({
+        name: '滴水湖到崇明岛 - 飞机',
+        position: positionProperty2,
+        availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
+            start: startTime,
+            stop: stopTime
+        })]),
+        model: {
+            uri: './model/shidi/shidi_Animi.gltf',
+            scale: 5,
+            minimumPixelSize: 50,
+            maximumScale: 100
+        },
+        orientation: new Cesium.VelocityOrientationProperty(positionProperty2),
+    });
+    airplaneEntities.push(airplaneEntity2);
 }
 
 // 每帧更新
 function updateFrame() {
-    if (!airplaneEntity) return;
+    if (!airplaneEntities.length) return;
+
+    // 更新当前选中的飞机
+    const currentAirplane = airplaneEntities[selectedAirplaneIndex];
+    if (!currentAirplane) return;
 
     const currentTime = viewer.clock.currentTime;
-    const position = airplaneEntity.position.getValue(currentTime);
+    const position = currentAirplane.position.getValue(currentTime);
 
     if (!position) return;
 
@@ -261,7 +348,7 @@ function updateFrame() {
     }
 
     // 更新飞行数据
-    updateFlightData(position, currentTime);
+    updateFlightData(position, currentTime, currentAirplane.name);
 
     // 相机跟随
     if (isCameraLocked) {
@@ -288,13 +375,14 @@ function updateInfoPanelPosition(position) {
 }
 
 // 更新飞行数据
-function updateFlightData(position, currentTime) {
+function updateFlightData(position, currentTime, airplaneName) {
     const cartographic = Cesium.Cartographic.fromCartesian(position);
     const height = cartographic.height;
 
     // 计算航向
     const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.1, new Cesium.JulianDate());
-    const nextPosition = airplaneEntity.position.getValue(nextTime);
+    const currentAirplane = airplaneEntities[selectedAirplaneIndex];
+    const nextPosition = currentAirplane.position.getValue(nextTime);
     let heading = 0;
 
     if (nextPosition) {
@@ -310,6 +398,7 @@ function updateFlightData(position, currentTime) {
     }
 
     // 更新UI
+    document.getElementById('airplaneName').innerText = airplaneName || '未知';
     document.getElementById('altitude').innerText = Math.round(height) + ' m';
     document.getElementById('heading').innerText = Math.round(heading) + '°';
 }
@@ -320,7 +409,8 @@ function updateCameraFollow(position, currentTime) {
 
     // 计算飞机的方向（航向）
     const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.1, new Cesium.JulianDate());
-    const nextPosition = airplaneEntity.position.getValue(nextTime);
+    const currentAirplane = airplaneEntities[selectedAirplaneIndex];
+    const nextPosition = currentAirplane.position.getValue(nextTime);
 
     let heading = 0;
     if (nextPosition) {
@@ -358,7 +448,7 @@ function updateCameraFollow(position, currentTime) {
 // 飞到总览视角
 function flyToOverview() {
     viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(121.4998, 31.2397, 2500),
+        destination: Cesium.Cartesian3.fromDegrees(121.4998, 31.2097, 3000),
         orientation: {
             heading: Cesium.Math.toRadians(0),
             pitch: Cesium.Math.toRadians(-40),
@@ -378,13 +468,24 @@ function setupEventListeners() {
     handler.setInputAction(function (click) {
         const pickedObject = viewer.scene.pick(click.position);
 
-        if (Cesium.defined(pickedObject) && pickedObject.id === airplaneEntity) {
-            // 点击飞机 - 切换面板
-            infoPanelVisible = !infoPanelVisible;
-            if (!infoPanelVisible) {
-                flightInfo.classList.remove('show');
+        if (Cesium.defined(pickedObject)) {
+            // 检查是否点击了任意一架飞机
+            const clickedIndex = airplaneEntities.findIndex(entity => entity === pickedObject.id);
+
+            if (clickedIndex !== -1) {
+                // 点击了飞机，切换到该飞机
+                selectedAirplaneIndex = clickedIndex;
+                airplaneEntity = airplaneEntities[clickedIndex];
+                pathEntity = pathEntities[clickedIndex];
+                infoPanelVisible = !infoPanelVisible;
+                if (!infoPanelVisible) {
+                    flightInfo.classList.remove('show');
+                }
+                return;
             }
-        } else if (isCameraLocked) {
+        }
+
+        if (isCameraLocked) {
             // 锁定状态下点击其他地方 - 解锁
             unlockCamera();
         } else {
@@ -398,8 +499,17 @@ function setupEventListeners() {
     handler.setInputAction(function (click) {
         const pickedObject = viewer.scene.pick(click.position);
 
-        if (Cesium.defined(pickedObject) && pickedObject.id === airplaneEntity) {
-            toggleCameraLock();
+        if (Cesium.defined(pickedObject)) {
+            // 检查是否点击了任意一架飞机
+            const clickedIndex = airplaneEntities.findIndex(entity => entity === pickedObject.id);
+
+            if (clickedIndex !== -1) {
+                // 切换到被点击的飞机
+                selectedAirplaneIndex = clickedIndex;
+                airplaneEntity = airplaneEntities[clickedIndex];
+                pathEntity = pathEntities[clickedIndex];
+                toggleCameraLock();
+            }
         }
     }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 }
