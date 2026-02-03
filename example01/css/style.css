@@ -12,6 +12,12 @@ html, body, #cesiumContainer {
     background: #000;
 }
 
+/* 提高 canvas 渲染质量 */
+#cesiumContainer canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
 /* 加载提示 */
 .loading {
     position: absolute;

@@ -10,6 +10,8 @@ let infoPanelVisible = false;
 let airplaneEntities = [];
 let pathEntities = [];
 let selectedAirplaneIndex = 0; // 当前选中的飞机索引
+let cameraDistance = 500; // 相机跟随距离（米）
+let cameraHeightOffset = 200; // 相机高度偏移（米）
 
 // 东方明珠位置
 const dongfangmingzhu = {
@@ -32,67 +34,79 @@ const chongmingdao = {
     height: 600
 };
 
-// 建筑着色器代码 - 浅色 + 动态灯光效果
+// 建筑着色器代码 - 原色 + 白线扫描效果
 const BUILDING_SHADER = `
     void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
         float height = fsInput.attributes.positionMC.z;
 
-        // 基础颜色定义 - 带灰度的浅色
-        vec3 baseColor;
-        float glowStrength = 0.0;
+        // 使用建筑原色（白色/浅灰基础）- 调亮
+        vec3 baseColor = vec3(0.92, 0.92, 0.92);
 
-        if (height > 400.0) {
-            baseColor = vec3(0.35, 0.55, 0.6); // 灰青色
-            glowStrength = 0.4;
-        } else if (height > 250.0) {
-            baseColor = vec3(0.6, 0.45, 0.5); // 灰粉色
-            glowStrength = 0.35;
-        } else if (height > 120.0) {
-            baseColor = vec3(0.4, 0.5, 0.6); // 灰蓝色
-            glowStrength = 0.3;
-        } else if (height > 50.0) {
-            baseColor = vec3(0.5, 0.45, 0.6); // 灰紫色
-            glowStrength = 0.25;
-        } else {
-            baseColor = vec3(0.4, 0.4, 0.5); // 灰蓝色
-            glowStrength = 0.2;
+        // 获取时间用于动画
+        float time = float(czm_frameNumber) * 0.02;
+
+        // === 白线扫描效果（带间隔，低矮建筑不显示）===
+        float scanGlow = 0.0;
+        
+        // 只对一定高度以上的建筑显示光效（50米以上）
+        if (height > 50.0) {
+            // 扫描周期：包含扫描时间和间隔时间
+            float scanSpeed = 200.0; // 扫描速度
+            float scanHeight = 600.0; // 扫描高度范围
+            float cycleDuration = scanHeight + 200.0; // 扫描高度 + 间隔距离
+            
+            // 当前周期中的位置
+            float cyclePos = mod(time * scanSpeed, cycleDuration);
+            
+            // 只有在扫描范围内才显示光效
+            if (cyclePos < scanHeight) {
+                float scanPos = cyclePos;
+                float distToScan = abs(height - scanPos);
+                float scanWidth = 8.0; // 扫描线宽度
+                scanGlow = 1.0 - smoothstep(0.0, scanWidth, distToScan);
+                scanGlow *= 0.9;
+            }
         }
+        
+        // 扫描线颜色（亮白色带发光）
+        vec3 scanColor = vec3(1.0, 1.0, 1.0);
 
-        // 获取时间用于动画 - 加快速度
-        float time = float(czm_frameNumber) * 0.03;
-
-        // 灯光流动效果 - 从下往上的涌泉效果 (加快)
-        float waveSpeed = 3.0;
-        float waveHeight = mod(height * 0.015 - time * waveSpeed, 3.14159);
-        float lightWave = sin(waveHeight) * 0.5 + 0.5;
-
-        // RGB渐变效果 - 随高度变化 (加快)
-        vec3 rainbowColor;
-        float hue = mod(height * 0.003 + time * 0.15, 1.0);
-        if (hue < 0.33) {
-            rainbowColor = mix(vec3(0.7, 0.4, 0.4), vec3(0.4, 0.7, 0.4), hue * 3.0);
-        } else if (hue < 0.66) {
-            rainbowColor = mix(vec3(0.4, 0.7, 0.4), vec3(0.4, 0.4, 0.7), (hue - 0.33) * 3.0);
-        } else {
-            rainbowColor = mix(vec3(0.4, 0.4, 0.7), vec3(0.7, 0.4, 0.6), (hue - 0.66) * 3.0);
-        }
-
-        // 边缘光效果
+        // === 光影效果 ===
+        // 获取法线和视图方向
         vec3 vNormal = normalize(fsInput.attributes.normalEC);
         vec3 vView = normalize(-fsInput.attributes.positionEC);
+        
+        // 主光源方向
+        vec3 lightDir = normalize(vec3(0.6, 0.4, 0.7));
+        
+        // 漫反射光照 - 提亮
+        float diff = max(dot(vNormal, lightDir), 0.0);
+        float diffuse = 0.6 + 0.5 * diff;
+        
+        // 阴影 - 减轻
+        float shadowFactor = smoothstep(-0.3, 0.6, diff);
+        
+        // 环境光遮蔽 - 提亮
+        float ao = 0.8 + 0.2 * max(vNormal.z, 0.0);
+        
+        // 菲涅尔边缘光
         float rim = 1.0 - max(dot(vNormal, vView), 0.0);
-        rim = pow(rim, 2.0);
+        rim = pow(rim, 3.0);
+        
+        // 应用光影 - 整体提亮
+        vec3 litColor = baseColor * diffuse * ao;
+        litColor *= mix(0.85, 1.0, shadowFactor);
+        litColor += vec3(rim * 0.2); // 边缘光增强
+        
+        // 添加扫描线效果
+        litColor = mix(litColor, scanColor, scanGlow);
+        litColor += scanColor * scanGlow * 0.6; // 发光增强
+        
+        // 最终提亮
+        litColor *= 1.15;
 
-        // 混合颜色：基础色 + RGB渐变 + 灯光流动
-        vec3 flowColor = mix(baseColor, rainbowColor, lightWave * 0.4);
-        vec3 glowColor = flowColor * (1.0 + rim * glowStrength + lightWave * 0.3);
-
-        // 追加闪烁效果
-        float flicker = sin(time * 3.0) * 0.05 + 0.95;
-        glowColor *= flicker;
-
-        material.diffuse = glowColor;
-        material.alpha = 0.85; // 稍微透明
+        material.diffuse = litColor;
+        material.alpha = 0.6;
     }
 `;
 
@@ -113,7 +127,17 @@ async function initMap() {
             navigationHelpButton: false,
             navigationInstructionsInitiallyVisible: false,
             shouldAnimate: true,
-            terrain: Cesium.Terrain.fromWorldTerrain()
+            terrain: Cesium.Terrain.fromWorldTerrain(),
+            // 提高渲染质量
+            msaaSamples: 4, // 启用 4x MSAA 抗锯齿
+            contextOptions: {
+                webgl: {
+                    alpha: false,
+                    antialias: true, // 启用 WebGL 抗锯齿
+                    preserveDrawingBuffer: true,
+                    powerPreference: 'high-performance'
+                }
+            }
         });
 
         // 隐藏版权信息
@@ -156,19 +180,46 @@ function initSceneEffects() {
     scene.globe.depthTestAgainstTerrain = true;
     scene.highDynamicRange = true;
 
-    // 光源
+    // 主光源 - 模拟阳光斜射，产生明显光影
     scene.light = new Cesium.DirectionalLight({
-        direction: new Cesium.Cartesian3(0.5, -0.3, -0.8),
-        intensity: 2.0
+        direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
+        intensity: 2.5
     });
 
-    // 背景色
-    scene.backgroundColor = new Cesium.Color(0.01, 0.02, 0.06, 1.0);
+    // 背景色 - 调亮
+    scene.backgroundColor = new Cesium.Color(0.05, 0.08, 0.15, 1.0);
 
     // 雾效
     scene.fog.enabled = true;
-    scene.fog.density = 0.0002;
-    scene.fog.minimumBrightness = 0.1;
+    scene.fog.density = 0.00015;
+    scene.fog.minimumBrightness = 0.2;
+
+    // 阴影设置
+    scene.shadowMap.enabled = true;
+    scene.shadowMap.size = 2048;
+    scene.shadowMap.softShadows = true;
+    scene.shadowMap.darkness = 0.4;
+
+    // 环境光 - 增加整体亮度
+    scene.globe.dynamicAtmosphereLighting = true;
+    scene.globe.dynamicAtmosphereLightingFromSun = true;
+
+    // 曝光和色调映射 - 提亮画面
+    scene.hdr = true;
+    scene.globe.maximumScreenSpaceError = 2;
+
+    // === 提高清晰度设置 ===
+    // 启用抗锯齿 (MSAA)
+    scene.postProcessStages.fxaa.enabled = true;
+
+    // 提高分辨率比例（以性能为代价换取清晰度）
+    viewer.resolutionScale = window.devicePixelRatio || 1.0;
+
+    // 各向异性过滤 - 提高纹理清晰度
+    scene.globe.maximumScreenSpaceError = 2;
+
+    // 提高几何体渲染精度
+    scene.globe.tileCacheSize = 512;
 }
 
 // 加载3D建筑
@@ -181,7 +232,7 @@ async function loadBuildings() {
             fragmentShaderText: BUILDING_SHADER
         });
 
-        osmBuildings.maximumScreenSpaceError = 8;
+        osmBuildings.maximumScreenSpaceError = 4; // 提高建筑细节精度
         viewer.scene.primitives.add(osmBuildings);
 
     } catch (error) {
@@ -403,7 +454,7 @@ function updateFlightData(position, currentTime, airplaneName) {
     document.getElementById('heading').innerText = Math.round(heading) + '°';
 }
 
-// 更新相机跟随 - 在飞机尾部后方上方
+// 更新相机跟随 - 在飞机尾部后方上方，支持滚轮缩放
 function updateCameraFollow(position, currentTime) {
     const cartographic = Cesium.Cartographic.fromCartesian(position);
 
@@ -422,16 +473,14 @@ function updateCameraFollow(position, currentTime) {
         );
     }
 
-    // 计算相机位置：飞机斜后方上方（45度角）
-    const distance = 500; // 斜向距离（米）
-    const heightOffset = 200; // 上方高度（米）
-    const sideAngle = Cesium.Math.toRadians(-10); // 45度偏移角
+    // 计算相机位置：飞机斜后方上方
+    const sideAngle = Cesium.Math.toRadians(-10); // 侧偏角
 
-    // 计算斜后方位置（后方 + 45度侧偏）
+    // 计算斜后方位置（基于当前缩放距离）
     const backHeading = heading - sideAngle;
-    const backLon = Cesium.Math.toDegrees(cartographic.longitude) - Math.sin(backHeading) * (distance / 111000);
-    const backLat = Cesium.Math.toDegrees(cartographic.latitude) - Math.cos(backHeading) * (distance / 111000);
-    const cameraHeight = cartographic.height + heightOffset;
+    const backLon = Cesium.Math.toDegrees(cartographic.longitude) - Math.sin(backHeading) * (cameraDistance / 111000);
+    const backLat = Cesium.Math.toDegrees(cartographic.latitude) - Math.cos(backHeading) * (cameraDistance / 111000);
+    const cameraHeight = cartographic.height + cameraHeightOffset;
 
     const cameraPosition = Cesium.Cartesian3.fromDegrees(backLon, backLat, cameraHeight);
 
@@ -522,6 +571,8 @@ function toggleCameraLock() {
     if (isCameraLocked) {
         viewer.scene.screenSpaceCameraController.enableInputs = false;
         cameraHint.classList.add('show');
+        // 添加滚轮缩放监听
+        viewer.canvas.addEventListener('wheel', handleCameraZoom, { passive: false });
     } else {
         unlockCamera();
     }
@@ -532,6 +583,23 @@ function unlockCamera() {
     isCameraLocked = false;
     viewer.scene.screenSpaceCameraController.enableInputs = true;
     document.getElementById('cameraHint').classList.remove('show');
+    // 移除滚轮缩放监听
+    viewer.canvas.removeEventListener('wheel', handleCameraZoom);
+}
+
+// 处理相机滚轮缩放
+function handleCameraZoom(e) {
+    if (!isCameraLocked) return;
+    
+    e.preventDefault();
+    
+    // 滚轮向上（负值）= 放大（减小距离），向下（正值）= 缩小（增加距离）
+    const zoomSpeed = 30; // 缩放速度
+    const delta = e.deltaY > 0 ? zoomSpeed : -zoomSpeed;
+    
+    // 更新距离和高度（保持视角比例）
+    cameraDistance = Math.max(100, Math.min(2000, cameraDistance + delta));
+    cameraHeightOffset = cameraDistance * 0.4; // 保持高度与距离的比例
 }
 
 // 启动
