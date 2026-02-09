@@ -122,6 +122,10 @@ const BUILDING_SHADER_OPTIMIZED = `
         float ambientCoefficient = 0.3;
         float diffuseCoefficient = max(0.0, dot(normalEC, czm_sunDirectionEC));
 
+        if (positionMC.z < 25.0) {
+            discard;
+        }
+
         if (u_isDark) {
             vec4 darkRefColor = texture(u_envTexture2, vec2(coord.x, (coord.z - coord.y) / 2.0));
             material.diffuse = mix(
@@ -139,11 +143,13 @@ const BUILDING_SHADER_OPTIMIZED = `
             float gradient = buildingHeight / heightRange + sin(pulse) * 0.1;
             material.diffuse *= vec3(gradient);
 
-            float scanTime = fract(czm_frameNumber / 360.0);
+            float scanTime = fract(czm_frameNumber / 120.0);
             scanTime = abs(scanTime - 0.5) * 2.0;
             float h = clamp(buildingHeight / glowRange, 0.0, 1.0);
-            float diff = step(0.005, abs(h - scanTime));
-            material.diffuse += material.diffuse * (1.0 - diff);
+            float diff = step(0.015, abs(h - scanTime));
+            float lineMask = 1.0 - diff;
+            vec3 lineColor = vec3(0.7);
+            material.diffuse = mix(material.diffuse, lineColor, lineMask * 0.6);
         } else {
             vec4 dayRefColor = texture(u_envTexture, vec2(coord.x, (coord.z - coord.y) / 3.0));
             material.diffuse = mix(
@@ -351,6 +357,19 @@ async function loadBuildings() {
         });
 
         osmBuildings.customShader = buildingCustomShader;
+        osmBuildings.tileVisible.addEventListener((tile) => {
+            const content = tile.content;
+            const featureCount = content.featuresLength;
+            for (let featureIndex = 0; featureIndex < featureCount; featureIndex++) {
+                const feature = content.getFeature(featureIndex);
+                const height = Number(feature.getProperty('height'));
+                const estimatedHeight = Number(feature.getProperty('cesium#estimatedHeight'));
+                const resolvedHeight = Number.isFinite(height)
+                    ? height
+                    : (Number.isFinite(estimatedHeight) ? estimatedHeight : NaN);
+                feature.show = !Number.isFinite(resolvedHeight) || resolvedHeight >= 25.0;
+            }
+        });
 
         osmBuildings.maximumScreenSpaceError = 8; // 建筑细节精度（平衡）
         viewer.scene.primitives.add(osmBuildings);
