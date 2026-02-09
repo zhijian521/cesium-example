@@ -77,6 +77,8 @@ const state = {
     }
 };
 
+let isNightMode = true;
+
 // ==================== 初始化 ====================
 
 async function init() {
@@ -148,6 +150,50 @@ function initScene() {
     
     // 分辨率设置
     state.viewer.resolutionScale = 1.0;
+
+    applySceneMode(isNightMode);
+}
+
+function applySceneMode(useNightMode) {
+    isNightMode = useNightMode;
+    const scene = state.viewer.scene;
+
+    if (isNightMode) {
+        scene.light = new Cesium.DirectionalLight({
+            direction: new Cesium.Cartesian3(0.5, -0.3, -0.8),
+            intensity: 0.35
+        });
+        scene.sun.show = false;
+        scene.moon.show = false;
+        scene.skyAtmosphere.show = false;
+        scene.globe.showGroundAtmosphere = false;
+        scene.globe.dynamicAtmosphereLighting = false;
+        scene.globe.dynamicAtmosphereLightingFromSun = false;
+    } else {
+        scene.light = new Cesium.DirectionalLight({
+            direction: new Cesium.Cartesian3(0.5, -0.3, -0.8),
+            intensity: 2.0
+        });
+        scene.sun.show = true;
+        scene.moon.show = false;
+        scene.skyAtmosphere.show = true;
+        scene.globe.showGroundAtmosphere = true;
+        scene.globe.dynamicAtmosphereLighting = true;
+        scene.globe.dynamicAtmosphereLightingFromSun = true;
+    }
+
+    updateSceneModeButton();
+}
+
+function toggleSceneMode() {
+    applySceneMode(!isNightMode);
+}
+
+function updateSceneModeButton() {
+    const button = document.getElementById('btnSceneMode');
+    if (button) {
+        button.textContent = isNightMode ? 'Switch to Day' : 'Switch to Night';
+    }
 }
 
 // ==================== 空域创建 ====================
@@ -312,6 +358,12 @@ function flyToOverview() {
 // ==================== 事件处理 ====================
 
 function setupEventListeners() {
+    const modeButton = document.getElementById('btnSceneMode');
+    if (modeButton) {
+        modeButton.addEventListener('click', toggleSceneMode);
+        updateSceneModeButton();
+    }
+
     // 虹桥机场总开关
     setupMasterToggle('toggleHongqiao', 'hongqiao', 'toggleHqLayer');
     

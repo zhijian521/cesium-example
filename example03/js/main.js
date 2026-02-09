@@ -8,6 +8,7 @@ let isCameraLocked = false;
 let infoPanelVisible = false;
 let airplaneEntities = [];
 let pathEntities = [];
+let isNightMode = true;
 let selectedAirplaneIndex = 0;
 let cameraDistance = 500;
 let cameraHeightOffset = 200;
@@ -249,6 +250,50 @@ function initSceneEffects() {
     viewer.resolutionScale = 1.5;
     scene.globe.maximumScreenSpaceError = 4;
     scene.globe.tileCacheSize = 384;
+
+    applySceneMode(isNightMode);
+}
+
+function applySceneMode(useNightMode) {
+    isNightMode = useNightMode;
+    const scene = viewer.scene;
+
+    if (isNightMode) {
+        scene.light = new Cesium.DirectionalLight({
+            direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
+            intensity: 0.35
+        });
+        scene.sun.show = false;
+        scene.moon.show = false;
+        scene.skyAtmosphere.show = false;
+        scene.globe.showGroundAtmosphere = false;
+        scene.globe.dynamicAtmosphereLighting = false;
+        scene.globe.dynamicAtmosphereLightingFromSun = false;
+    } else {
+        scene.light = new Cesium.DirectionalLight({
+            direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
+            intensity: 2.5
+        });
+        scene.sun.show = true;
+        scene.moon.show = false;
+        scene.skyAtmosphere.show = true;
+        scene.globe.showGroundAtmosphere = true;
+        scene.globe.dynamicAtmosphereLighting = true;
+        scene.globe.dynamicAtmosphereLightingFromSun = true;
+    }
+
+    updateSceneModeButton();
+}
+
+function toggleSceneMode() {
+    applySceneMode(!isNightMode);
+}
+
+function updateSceneModeButton() {
+    const button = document.getElementById('btnSceneMode');
+    if (button) {
+        button.textContent = isNightMode ? 'Switch to Day' : 'Switch to Night';
+    }
 }
 
 async function loadBuildings() {
@@ -512,6 +557,12 @@ function flyToOverview() {
 function setupEventListeners() {
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     const flightInfo = document.getElementById("flightInfo");
+    const modeButton = document.getElementById("btnSceneMode");
+
+    if (modeButton) {
+        modeButton.addEventListener("click", toggleSceneMode);
+        updateSceneModeButton();
+    }
 
     handler.setInputAction(function (click) {
         const pickedObject = viewer.scene.pick(click.position);

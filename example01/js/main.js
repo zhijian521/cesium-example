@@ -9,6 +9,7 @@ let isCameraLocked = false;
 let infoPanelVisible = false;
 let airplaneEntities = [];
 let pathEntities = [];
+let isNightMode = true;
 let selectedAirplaneIndex = 0; // 当前选中的飞机索引
 let cameraDistance = 500; // 相机跟随距离（米）
 let cameraHeightOffset = 200; // 相机高度偏移（米）
@@ -220,6 +221,49 @@ function initSceneEffects() {
 
     // 瓦片缓存
     scene.globe.tileCacheSize = 384;
+    applySceneMode(isNightMode);
+}
+
+function applySceneMode(useNightMode) {
+    isNightMode = useNightMode;
+    const scene = viewer.scene;
+
+    if (isNightMode) {
+        scene.light = new Cesium.DirectionalLight({
+            direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
+            intensity: 0.35
+        });
+        scene.sun.show = false;
+        scene.moon.show = false;
+        scene.skyAtmosphere.show = false;
+        scene.globe.showGroundAtmosphere = false;
+        scene.globe.dynamicAtmosphereLighting = false;
+        scene.globe.dynamicAtmosphereLightingFromSun = false;
+    } else {
+        scene.light = new Cesium.DirectionalLight({
+            direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
+            intensity: 2.5
+        });
+        scene.sun.show = true;
+        scene.moon.show = false;
+        scene.skyAtmosphere.show = true;
+        scene.globe.showGroundAtmosphere = true;
+        scene.globe.dynamicAtmosphereLighting = true;
+        scene.globe.dynamicAtmosphereLightingFromSun = true;
+    }
+
+    updateSceneModeButton();
+}
+
+function toggleSceneMode() {
+    applySceneMode(!isNightMode);
+}
+
+function updateSceneModeButton() {
+    const button = document.getElementById('btnSceneMode');
+    if (button) {
+        button.textContent = isNightMode ? 'Switch to Day' : 'Switch to Night';
+    }
 }
 
 // 加载3D建筑
@@ -512,6 +556,12 @@ function setupEventListeners() {
     const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     const flightInfo = document.getElementById('flightInfo');
     const cameraHint = document.getElementById('cameraHint');
+    const modeButton = document.getElementById('btnSceneMode');
+
+    if (modeButton) {
+        modeButton.addEventListener('click', toggleSceneMode);
+        updateSceneModeButton();
+    }
 
     // 单击 - 显示/隐藏信息面板或解锁
     handler.setInputAction(function (click) {
