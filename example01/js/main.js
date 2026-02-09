@@ -623,12 +623,20 @@ function updateCameraFollow(position, currentTime) {
 
     const cameraPosition = Cesium.Cartesian3.fromDegrees(backLon, backLat, cameraHeight);
 
+    const targetUp = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(position, new Cesium.Cartesian3());
+    const targetOffset = Cesium.Cartesian3.multiplyByScalar(targetUp, 16, new Cesium.Cartesian3());
+    const lookTarget = Cesium.Cartesian3.add(position, targetOffset, new Cesium.Cartesian3());
+    const direction = Cesium.Cartesian3.normalize(
+        Cesium.Cartesian3.subtract(lookTarget, cameraPosition, new Cesium.Cartesian3()),
+        new Cesium.Cartesian3()
+    );
+    const up = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(cameraPosition, new Cesium.Cartesian3());
+
     viewer.camera.setView({
         destination: cameraPosition,
         orientation: {
-            heading: heading,
-            pitch: Cesium.Math.toRadians(-15),
-            roll: 0
+            direction,
+            up
         }
     });
 }
@@ -726,6 +734,7 @@ function toggleCameraLock() {
 // 解锁相机
 function unlockCamera() {
     isCameraLocked = false;
+
     viewer.scene.screenSpaceCameraController.enableInputs = true;
     document.getElementById('cameraHint').classList.remove('show');
     // 移除滚轮缩放监听
