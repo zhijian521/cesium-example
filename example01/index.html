@@ -3,20 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Example01 · 飞机飞行演示</title>
+    <title>Example01 飞机飞行演示</title>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.112/Build/Cesium/Widgets/widgets.css">
     <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
-    <!-- 加载提示 -->
     <div id="loading" class="loading">LOADING...</div>
-    
-    <!-- 飞机信息面板 -->
+
     <div id="flightInfo" class="flight-info">
         <h3 id="airplaneName">✈️ 东方明珠环线 - 飞机</h3>
         <div class="info-row">
             <span class="label">速度</span>
-            <span class="value">360 km/h</span>
+            <span class="value" id="speed">360 km/h</span>
+        </div>
+        <div class="info-row">
+            <span class="label">起飞地</span>
+            <span class="value" id="departure">东方明珠</span>
+        </div>
+        <div class="info-row">
+            <span class="label">目的地</span>
+            <span class="value" id="destination">环线巡航</span>
+        </div>
+        <div class="info-row">
+            <span class="label">当前飞行状态</span>
+            <span class="value" id="flightStatus">巡航</span>
+        </div>
+        <div class="info-row">
+            <span class="label">航班号</span>
+            <span class="value" id="flightNo">E20</span>
         </div>
         <div class="info-row">
             <span class="label">高度</span>
@@ -26,12 +40,18 @@
             <span class="label">航向</span>
             <span class="value" id="heading">0°</span>
         </div>
+        <div class="info-row">
+            <span class="label">当前剩余油量</span>
+            <span class="value" id="fuelRemaining">88%</span>
+        </div>
+        <div class="info-row">
+            <span class="label">当前状态</span>
+            <span class="value" id="systemStatus">正常</span>
+        </div>
     </div>
 
-    <!-- 视角锁定提示 -->
     <div id="cameraHint" class="camera-hint">🔒 视角跟随中 | 单击任意位置解锁</div>
 
-    <!-- Cesium 容器 -->
     <button id="btnSceneMode" class="scene-mode-btn">Switch to Day</button>
     <div id="cesiumContainer"></div>
 

@@ -22,6 +22,9 @@ const INFO_PANEL_DISTANCE_MIN = 300;
 const INFO_PANEL_DISTANCE_MAX = 8000;
 const CAMERA_DISTANCE_MIN = 100;
 const CAMERA_DISTANCE_MAX = 2000;
+const TARGET_SPEED_KMH = 280;
+const SPEED_DISPLAY_RANGE_KMH = 20;
+const speedBaselineMap = new WeakMap();
 
 const dongfangmingzhu = {
     lon: 121.4998,
@@ -579,13 +582,61 @@ function updateInfoPanelPosition(position) {
 }
 
 // 更新飞行数据
+function calculateSpeedKmh(currentAirplane, currentTime, currentPosition) {
+    const sampleOffsetSeconds = 0.5;
+    const previousTime = Cesium.JulianDate.addSeconds(currentTime, -sampleOffsetSeconds, new Cesium.JulianDate());
+    const nextTime = Cesium.JulianDate.addSeconds(currentTime, sampleOffsetSeconds, new Cesium.JulianDate());
+
+    const previousPosition = currentAirplane.position.getValue(previousTime);
+    const nextPosition = currentAirplane.position.getValue(nextTime);
+
+    if (previousPosition && nextPosition) {
+        const distanceMeters = Cesium.Cartesian3.distance(previousPosition, nextPosition);
+        return (distanceMeters / (sampleOffsetSeconds * 2)) * 3.6;
+    }
+
+    if (nextPosition) {
+        const distanceMeters = Cesium.Cartesian3.distance(currentPosition, nextPosition);
+        return (distanceMeters / sampleOffsetSeconds) * 3.6;
+    }
+
+    if (previousPosition) {
+        const distanceMeters = Cesium.Cartesian3.distance(previousPosition, currentPosition);
+        return (distanceMeters / sampleOffsetSeconds) * 3.6;
+    }
+
+    return TARGET_SPEED_KMH;
+}
+
+function normalizeDisplaySpeedKmh(currentAirplane, rawSpeedKmh) {
+    if (!Number.isFinite(rawSpeedKmh) || rawSpeedKmh <= 0) {
+        return TARGET_SPEED_KMH;
+    }
+
+    let baselineSpeed = speedBaselineMap.get(currentAirplane);
+    if (!baselineSpeed) {
+        baselineSpeed = rawSpeedKmh;
+        speedBaselineMap.set(currentAirplane, baselineSpeed);
+    }
+
+    const normalizedSpeed = (rawSpeedKmh / baselineSpeed) * TARGET_SPEED_KMH;
+    const minSpeed = TARGET_SPEED_KMH - SPEED_DISPLAY_RANGE_KMH;
+    const maxSpeed = TARGET_SPEED_KMH + SPEED_DISPLAY_RANGE_KMH;
+    return Math.round(Cesium.Math.clamp(normalizedSpeed, minSpeed, maxSpeed));
+}
+
 function updateFlightData(position, currentTime, airplaneName) {
     const cartographic = Cesium.Cartographic.fromCartesian(position);
     const height = cartographic.height;
 
     // 计算航向
-    const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.1, new Cesium.JulianDate());
     const currentAirplane = airplaneEntities[selectedAirplaneIndex];
+    if (!currentAirplane) return;
+
+    const rawSpeedKmh = calculateSpeedKmh(currentAirplane, currentTime, position);
+    const speedKmh = normalizeDisplaySpeedKmh(currentAirplane, rawSpeedKmh);
+
+    const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.1, new Cesium.JulianDate());
     const nextPosition = currentAirplane.position.getValue(nextTime);
     let heading = 0;
 
@@ -603,6 +654,7 @@ function updateFlightData(position, currentTime, airplaneName) {
 
     // 更新UI
     document.getElementById('airplaneName').innerText = airplaneName || '未知';
+    document.getElementById('speed').innerText = speedKmh + ' km/h';
     document.getElementById('altitude').innerText = Math.round(height) + ' m';
     document.getElementById('heading').innerText = Math.round(heading) + '°';
 }
