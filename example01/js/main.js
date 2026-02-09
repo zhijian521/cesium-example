@@ -9,6 +9,7 @@ let isCameraLocked = false;
 let infoPanelVisible = false;
 let airplaneEntities = [];
 let pathEntities = [];
+let tailEffectEntities = [];
 let buildingCustomShader;
 let isNightMode = true;
 let selectedAirplaneIndex = 0; // 当前选中的飞机索引
@@ -25,6 +26,33 @@ const CAMERA_DISTANCE_MAX = 2000;
 const TARGET_SPEED_KMH = 280;
 const SPEED_DISPLAY_RANGE_KMH = 20;
 const speedBaselineMap = new WeakMap();
+const tailEffectToAirplaneIndexMap = new WeakMap();
+const airplaneAlertStateMap = new WeakMap();
+
+const AIRPLANE_ALERT_CONFIG = {
+    abnormalProbability: 0.45,
+    minDurationSeconds: 1.2,
+    maxDurationSeconds: 3.2
+};
+
+const TAIL_RIPPLE_CONFIG = {
+    warningColorStart: Cesium.Color.fromCssColorString('#ffd60a'),
+    warningColorEnd: Cesium.Color.fromCssColorString('#ff3b30'),
+    layerCount: 4,
+    cycleSeconds: 1.2,
+    baseRadiusRatio: 0.1625,
+    growRadiusRatio: 3.2,
+    centerOffsetRatio: 0,
+    minAlpha: 0.05,
+    maxAlpha: 0.56,
+    warningIconMinSizePx: 18,
+    warningIconMaxSizePx: 52,
+    warningIconScaleByRipplePixelRadius: 0.8,
+    breathingAmplitude: 0.12,
+    breathingFrequency: 3.2
+};
+
+const WARNING_ICON_DATA_URL = createWarningIconDataUrl();
 
 const dongfangmingzhu = {
     lon: 121.4998,
@@ -457,6 +485,7 @@ function createAirplaneAndPath() {
         orientation: new Cesium.VelocityOrientationProperty(positionProperty1),
     });
     airplaneEntities.push(airplaneEntity);
+    createTailBreathingEffectForAirplane(airplaneEntity, 0);
 
     // === 航线2: 滴水湖到崇明岛（往返） ===
     const numPoints2 = 1000; // 增加采样点，大幅降低速度（降低80%）
@@ -527,6 +556,212 @@ function createAirplaneAndPath() {
         orientation: new Cesium.VelocityOrientationProperty(positionProperty2),
     });
     airplaneEntities.push(airplaneEntity2);
+    createTailBreathingEffectForAirplane(airplaneEntity2, 1);
+}
+
+function createTailBreathingEffectForAirplane(airplane, airplaneIndex) {
+    for (let layer = 0; layer < TAIL_RIPPLE_CONFIG.layerCount; layer++) {
+        const layerProgressOffset = layer / TAIL_RIPPLE_CONFIG.layerCount;
+        const tailEffect = viewer.entities.add({
+            name: `飞机尾部水波纹特效-${airplaneIndex + 1}-${layer + 1}`,
+            position: new Cesium.CallbackProperty((time) => getTailRipplePosition(airplane, time), false),
+            ellipsoid: {
+                radii: new Cesium.CallbackProperty((time) => {
+                    const ripplePosition = getTailRipplePosition(airplane, time);
+                    const rippleState = getTailRippleVisualState(airplane, time, layerProgressOffset, ripplePosition);
+                    return new Cesium.Cartesian3(rippleState.radius, rippleState.radius, rippleState.radius);
+                }, false),
+                material: new Cesium.ColorMaterialProperty(new Cesium.CallbackProperty((time) => {
+                    const ripplePosition = getTailRipplePosition(airplane, time);
+                    const rippleState = getTailRippleVisualState(airplane, time, layerProgressOffset, ripplePosition);
+                    return rippleState.color.withAlpha(rippleState.alpha);
+                }, false)),
+                outline: false
+            }
+        });
+
+        tailEffectEntities.push(tailEffect);
+        tailEffectToAirplaneIndexMap.set(tailEffect, airplaneIndex);
+    }
+
+    const warningIconEntity = viewer.entities.add({
+        name: `飞机预警图标-${airplaneIndex + 1}`,
+        position: new Cesium.CallbackProperty((time) => getTailRipplePosition(airplane, time), false),
+        billboard: {
+            image: WARNING_ICON_DATA_URL,
+            verticalOrigin: Cesium.VerticalOrigin.CENTER,
+            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+            scaleByDistance: new Cesium.NearFarScalar(500, 1.25, 9000, 0.65),
+            show: new Cesium.CallbackProperty((time) => isAirplaneAbnormal(airplane, time), false),
+            width: new Cesium.CallbackProperty((time) => {
+                const ripplePosition = getTailRipplePosition(airplane, time);
+                const rippleState = getTailRippleVisualState(airplane, time, 0, ripplePosition);
+                return getWarningIconSizePx(airplane, time, ripplePosition, rippleState);
+            }, false),
+            height: new Cesium.CallbackProperty((time) => {
+                const ripplePosition = getTailRipplePosition(airplane, time);
+                const rippleState = getTailRippleVisualState(airplane, time, 0, ripplePosition);
+                return getWarningIconSizePx(airplane, time, ripplePosition, rippleState);
+            }, false)
+        }
+    });
+
+    tailEffectEntities.push(warningIconEntity);
+    tailEffectToAirplaneIndexMap.set(warningIconEntity, airplaneIndex);
+}
+
+function createWarningIconDataUrl() {
+    const size = 96;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+    if (!context) return '';
+
+    context.clearRect(0, 0, size, size);
+    context.beginPath();
+    context.moveTo(size * 0.5, size * 0.12);
+    context.lineTo(size * 0.12, size * 0.82);
+    context.lineTo(size * 0.88, size * 0.82);
+    context.closePath();
+    context.fillStyle = '#ff3b30';
+    context.fill();
+
+    context.strokeStyle = '#ffd60a';
+    context.lineWidth = size * 0.05;
+    context.stroke();
+
+    context.fillStyle = '#ffffff';
+    context.fillRect(size * 0.475, size * 0.34, size * 0.05, size * 0.26);
+    context.beginPath();
+    context.arc(size * 0.5, size * 0.68, size * 0.03, 0, Math.PI * 2);
+    context.fill();
+
+    return canvas.toDataURL('image/png');
+}
+
+function getAirplaneVisualMetrics(airplane, time, referencePosition) {
+    const cameraDistance = Cesium.Cartesian3.distance(viewer.camera.positionWC, referencePosition);
+    const fovy = viewer.camera.frustum?.fovy || Cesium.Math.toRadians(60);
+    const canvasHeight = Math.max(viewer.canvas.clientHeight || viewer.canvas.height || 1, 1);
+    const metersPerPixel = (2 * cameraDistance * Math.tan(fovy * 0.5)) / canvasHeight;
+
+    const modelScale = airplane?.model?.scale?.getValue?.(time) ?? airplane?.model?.scale ?? 5;
+    const minimumPixelSize = airplane?.model?.minimumPixelSize?.getValue?.(time) ?? airplane?.model?.minimumPixelSize ?? 80;
+
+    const numericScale = Number(modelScale) || 5;
+    const numericMinimumPixelSize = Number(minimumPixelSize) || 80;
+    const modelRadiusByScale = 10 * numericScale;
+    const modelRadiusByPixel = numericMinimumPixelSize * metersPerPixel * 0.42;
+    const visualRadius = Math.max(modelRadiusByScale, modelRadiusByPixel);
+
+    return {
+        visualRadius,
+        metersPerPixel
+    };
+}
+
+function getWarningIconSizePx(airplane, time, ripplePosition, rippleState) {
+    if (!ripplePosition || !rippleState || rippleState.radius <= 0) {
+        return TAIL_RIPPLE_CONFIG.warningIconMinSizePx;
+    }
+
+    const metrics = getAirplaneVisualMetrics(airplane, time, ripplePosition);
+    const sourceRadiusMeters = rippleState.innerRadius > 0 ? rippleState.innerRadius : rippleState.radius;
+    const rippleRadiusPx = sourceRadiusMeters / Math.max(metrics.metersPerPixel, 0.0001);
+    const targetSize = rippleRadiusPx * TAIL_RIPPLE_CONFIG.warningIconScaleByRipplePixelRadius;
+    return Cesium.Math.clamp(targetSize, TAIL_RIPPLE_CONFIG.warningIconMinSizePx, TAIL_RIPPLE_CONFIG.warningIconMaxSizePx);
+}
+
+function getTailRipplePosition(airplane, time) {
+    const airplanePosition = airplane.position.getValue(time);
+    if (!airplanePosition) return null;
+
+    if (!TAIL_RIPPLE_CONFIG.centerOffsetRatio) return airplanePosition;
+
+    const up = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(airplanePosition, new Cesium.Cartesian3());
+    const metrics = getAirplaneVisualMetrics(airplane, time, airplanePosition);
+    const centerOffset = Cesium.Cartesian3.multiplyByScalar(
+        up,
+        metrics.visualRadius * TAIL_RIPPLE_CONFIG.centerOffsetRatio,
+        new Cesium.Cartesian3()
+    );
+    return Cesium.Cartesian3.add(airplanePosition, centerOffset, new Cesium.Cartesian3());
+}
+
+function getTailRippleVisualState(airplane, time, layerProgressOffset, ripplePosition) {
+    if (!isAirplaneAbnormal(airplane, time)) {
+        return {
+            radius: 0,
+            innerRadius: 0,
+            alpha: 0,
+            color: TAIL_RIPPLE_CONFIG.warningColorStart
+        };
+    }
+
+    const elapsedSeconds = Cesium.JulianDate.secondsDifference(time, viewer.clock.startTime);
+    const normalizedTime = (elapsedSeconds / TAIL_RIPPLE_CONFIG.cycleSeconds + layerProgressOffset) % 1;
+    const cycleProgress = normalizedTime < 0 ? normalizedTime + 1 : normalizedTime;
+    const breathingScale = 1 + TAIL_RIPPLE_CONFIG.breathingAmplitude * Math.sin(elapsedSeconds * TAIL_RIPPLE_CONFIG.breathingFrequency);
+
+    const basePosition = ripplePosition || airplane.position.getValue(time);
+    if (!basePosition) {
+        return {
+            radius: 1,
+            innerRadius: 1,
+            alpha: TAIL_RIPPLE_CONFIG.minAlpha,
+            color: TAIL_RIPPLE_CONFIG.warningColorStart
+        };
+    }
+
+    const metrics = getAirplaneVisualMetrics(airplane, time, basePosition);
+    const baseRadius = metrics.visualRadius * TAIL_RIPPLE_CONFIG.baseRadiusRatio;
+    const innerRadius = baseRadius * breathingScale;
+    const radius = innerRadius * (1 + TAIL_RIPPLE_CONFIG.growRadiusRatio * cycleProgress);
+    const alpha = TAIL_RIPPLE_CONFIG.minAlpha + (1 - cycleProgress) * (TAIL_RIPPLE_CONFIG.maxAlpha - TAIL_RIPPLE_CONFIG.minAlpha);
+    const color = Cesium.Color.lerp(
+        TAIL_RIPPLE_CONFIG.warningColorStart,
+        TAIL_RIPPLE_CONFIG.warningColorEnd,
+        cycleProgress,
+        new Cesium.Color()
+    );
+
+    return {
+        radius,
+        innerRadius,
+        alpha,
+        color
+    };
+}
+
+function isAirplaneAbnormal(airplane, time) {
+    const nowSeconds = Cesium.JulianDate.secondsDifference(time, viewer.clock.startTime);
+    let alertState = airplaneAlertStateMap.get(airplane);
+
+    if (!alertState) {
+        const duration = Cesium.Math.lerp(
+            AIRPLANE_ALERT_CONFIG.minDurationSeconds,
+            AIRPLANE_ALERT_CONFIG.maxDurationSeconds,
+            Math.random()
+        );
+        alertState = {
+            isAbnormal: false,
+            nextSwitchAt: nowSeconds + duration
+        };
+        airplaneAlertStateMap.set(airplane, alertState);
+    }
+
+    if (nowSeconds >= alertState.nextSwitchAt) {
+        alertState.isAbnormal = Math.random() < AIRPLANE_ALERT_CONFIG.abnormalProbability;
+        const duration = Cesium.Math.lerp(
+            AIRPLANE_ALERT_CONFIG.minDurationSeconds,
+            AIRPLANE_ALERT_CONFIG.maxDurationSeconds,
+            Math.random()
+        );
+        alertState.nextSwitchAt = nowSeconds + duration;
+    }
+
+    return alertState.isAbnormal;
 }
 
 // 每帧更新
@@ -657,6 +892,9 @@ function updateFlightData(position, currentTime, airplaneName) {
     document.getElementById('speed').innerText = speedKmh + ' km/h';
     document.getElementById('altitude').innerText = Math.round(height) + ' m';
     document.getElementById('heading').innerText = Math.round(heading) + '°';
+
+    const isAbnormal = isAirplaneAbnormal(currentAirplane, currentTime);
+    document.getElementById('systemStatus').innerText = isAbnormal ? '异常告警' : '正常';
 }
 
 // 更新相机跟随 - 在飞机尾部后方上方，支持滚轮缩放
@@ -740,11 +978,14 @@ function setupEventListeners() {
             // 检查是否点击了任意一架飞机
             const clickedIndex = airplaneEntities.findIndex(entity => entity === pickedObject.id);
 
-            if (clickedIndex !== -1) {
+            const effectIndex = tailEffectToAirplaneIndexMap.get(pickedObject.id);
+            const resolvedIndex = clickedIndex !== -1 ? clickedIndex : effectIndex;
+
+            if (resolvedIndex !== undefined && resolvedIndex !== -1) {
                 // 点击了飞机，切换到该飞机
-                selectedAirplaneIndex = clickedIndex;
-                airplaneEntity = airplaneEntities[clickedIndex];
-                pathEntity = pathEntities[clickedIndex];
+                selectedAirplaneIndex = resolvedIndex;
+                airplaneEntity = airplaneEntities[resolvedIndex];
+                pathEntity = pathEntities[resolvedIndex];
                 infoPanelVisible = !infoPanelVisible;
                 if (!infoPanelVisible) {
                     flightInfo.classList.remove('show');
@@ -773,11 +1014,14 @@ function setupEventListeners() {
             // 检查是否点击了任意一架飞机
             const clickedIndex = airplaneEntities.findIndex(entity => entity === pickedObject.id);
 
-            if (clickedIndex !== -1) {
+            const effectIndex = tailEffectToAirplaneIndexMap.get(pickedObject.id);
+            const resolvedIndex = clickedIndex !== -1 ? clickedIndex : effectIndex;
+
+            if (resolvedIndex !== undefined && resolvedIndex !== -1) {
                 // 切换到被点击的飞机
-                selectedAirplaneIndex = clickedIndex;
-                airplaneEntity = airplaneEntities[clickedIndex];
-                pathEntity = pathEntities[clickedIndex];
+                selectedAirplaneIndex = resolvedIndex;
+                airplaneEntity = airplaneEntities[resolvedIndex];
+                pathEntity = pathEntities[resolvedIndex];
                 toggleCameraLock();
             }
         }
@@ -812,13 +1056,13 @@ function unlockCamera() {
 // 处理相机滚轮缩放
 function handleCameraZoom(e) {
     if (!isCameraLocked) return;
-    
+
     e.preventDefault();
-    
+
     // 滚轮向上（负值）= 放大（减小距离），向下（正值）= 缩小（增加距离）
     const zoomSpeed = 30; // 缩放速度
     const delta = e.deltaY > 0 ? zoomSpeed : -zoomSpeed;
-    
+
     // 更新距离和高度（保持视角比例）
     cameraDistance = Math.max(CAMERA_DISTANCE_MIN, Math.min(CAMERA_DISTANCE_MAX, cameraDistance + delta));
     cameraHeightOffset = cameraDistance * 0.4; // 保持高度与距离的比例
