@@ -38,17 +38,17 @@ html, body, #cesiumContainer {
 .flight-info {
     position: absolute;
     background: rgba(0, 20, 40, 0.95);
-    border: 2px solid #00d4ff;
-    border-radius: 12px;
-    padding: 15px 20px;
+    border: 1px solid #00d4ff;
+    border-radius: 10px;
+    padding: 10px 12px;
     color: #fff;
     font-family: 'Microsoft YaHei', sans-serif;
     z-index: 3000;
     display: none;
-    min-width: 220px;
-    box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+    min-width: 170px;
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.38);
     pointer-events: none;
-    transform: translate(-50%, -120%);
+    transform: translate(-50%, -100%);
 }
 
 .flight-info.show {
@@ -57,18 +57,18 @@ html, body, #cesiumContainer {
 
 .flight-info h3 {
     color: #00d4ff;
-    font-size: 16px;
-    margin-bottom: 10px;
+    font-size: 13px;
+    margin-bottom: 6px;
     text-align: center;
     border-bottom: 1px solid #00d4ff;
-    padding-bottom: 8px;
+    padding-bottom: 5px;
 }
 
 .flight-info .info-row {
     display: flex;
     justify-content: space-between;
-    margin: 8px 0;
-    font-size: 13px;
+    margin: 4px 0;
+    font-size: 12px;
 }
 
 .flight-info .label {

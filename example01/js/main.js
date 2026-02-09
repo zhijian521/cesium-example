@@ -16,6 +16,13 @@ let cameraDistance = 500; // 相机跟随距离（米）
 let cameraHeightOffset = 200; // 相机高度偏移（米）
 
 // 东方明珠位置
+const INFO_PANEL_OFFSET_Y_MIN = 20;
+const INFO_PANEL_OFFSET_Y_MAX = 200;
+const INFO_PANEL_DISTANCE_MIN = 300;
+const INFO_PANEL_DISTANCE_MAX = 8000;
+const CAMERA_DISTANCE_MIN = 100;
+const CAMERA_DISTANCE_MAX = 2000;
+
 const dongfangmingzhu = {
     lon: 121.4998,
     lat: 31.2397,
@@ -556,8 +563,15 @@ function updateInfoPanelPosition(position) {
         screenPosition.x > 0 && screenPosition.x < canvas.width &&
         screenPosition.y > 0 && screenPosition.y < canvas.height) {
 
+        const cameraToPlaneDistance = Cesium.Cartesian3.distance(viewer.camera.positionWC, position);
+        const zoomFactor = (cameraToPlaneDistance - INFO_PANEL_DISTANCE_MIN) / (INFO_PANEL_DISTANCE_MAX - INFO_PANEL_DISTANCE_MIN);
+        const clampedZoomFactor = Cesium.Math.clamp(zoomFactor, 0, 1);
+        const easedZoomFactor = 1 - Math.pow(1 - clampedZoomFactor, 5);
+        const panelOffsetY = Cesium.Math.lerp(INFO_PANEL_OFFSET_Y_MAX, INFO_PANEL_OFFSET_Y_MIN, easedZoomFactor);
+        const panelTop = Math.max(12, screenPosition.y - panelOffsetY);
+
         flightInfo.style.left = screenPosition.x + 'px';
-        flightInfo.style.top = screenPosition.y + 'px';
+        flightInfo.style.top = panelTop + 'px';
         flightInfo.classList.add('show');
     } else {
         flightInfo.classList.remove('show');
@@ -688,6 +702,8 @@ function setupEventListeners() {
         }
 
         if (isCameraLocked) {
+            infoPanelVisible = false;
+            flightInfo.classList.remove('show');
             // 锁定状态下点击其他地方 - 解锁
             unlockCamera();
         } else {
@@ -752,7 +768,7 @@ function handleCameraZoom(e) {
     const delta = e.deltaY > 0 ? zoomSpeed : -zoomSpeed;
     
     // 更新距离和高度（保持视角比例）
-    cameraDistance = Math.max(100, Math.min(2000, cameraDistance + delta));
+    cameraDistance = Math.max(CAMERA_DISTANCE_MIN, Math.min(CAMERA_DISTANCE_MAX, cameraDistance + delta));
     cameraHeightOffset = cameraDistance * 0.4; // 保持高度与距离的比例
 }
 
