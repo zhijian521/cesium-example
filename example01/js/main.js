@@ -451,7 +451,7 @@ function createAirplaneAndPath() {
         model: {
             uri: './model/shidi/shidi_Animi.gltf',
             scale: 5,
-            minimumPixelSize: 50,
+            minimumPixelSize: 80,
             maximumScale: 100
         },
         orientation: new Cesium.VelocityOrientationProperty(positionProperty1),
@@ -521,7 +521,7 @@ function createAirplaneAndPath() {
         model: {
             uri: './model/shidi/shidi_Animi.gltf',
             scale: 5,
-            minimumPixelSize: 50,
+            minimumPixelSize: 80,
             maximumScale: 100
         },
         orientation: new Cesium.VelocityOrientationProperty(positionProperty2),
