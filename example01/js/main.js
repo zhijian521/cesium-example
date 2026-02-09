@@ -133,7 +133,7 @@ const BUILDING_SHADER_OPTIMIZED = `
                 darkRefColor.rgb,
                 0.3
             );
-            material.diffuse *= 0.2;
+            material.diffuse *= 0.25;
 
             float baseHeight = -40.0;
             float heightRange = 20.0;
@@ -284,7 +284,7 @@ function applySceneMode(useNightMode) {
     if (isNightMode) {
         scene.light = new Cesium.DirectionalLight({
             direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
-            intensity: 0.35
+            intensity: 0.50
         });
         scene.sun.show = false;
         scene.moon.show = false;
