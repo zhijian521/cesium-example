@@ -25,6 +25,7 @@ const CAMERA_DISTANCE_MIN = 100;
 const CAMERA_DISTANCE_MAX = 2000;
 const TARGET_SPEED_KMH = 280;
 const SPEED_DISPLAY_RANGE_KMH = 20;
+const BUILDING_MIN_VISIBLE_HEIGHT = 30.0;
 const speedBaselineMap = new WeakMap();
 const tailEffectToAirplaneIndexMap = new WeakMap();
 const airplaneAlertStateMap = new WeakMap();
@@ -159,10 +160,6 @@ const BUILDING_SHADER_OPTIMIZED = `
         vec3 coord = normalize(vec3(czm_inverseViewRotation * reflect(posToCamera, normalEC)));
         float ambientCoefficient = 0.3;
         float diffuseCoefficient = max(0.0, dot(normalEC, czm_sunDirectionEC));
-
-        if (positionMC.z < 25.0) {
-            discard;
-        }
 
         if (u_isDark) {
             vec4 darkRefColor = texture(u_envTexture2, vec2(coord.x, (coord.z - coord.y) / 2.0));
@@ -405,7 +402,7 @@ async function loadBuildings() {
                 const resolvedHeight = Number.isFinite(height)
                     ? height
                     : (Number.isFinite(estimatedHeight) ? estimatedHeight : NaN);
-                feature.show = !Number.isFinite(resolvedHeight) || resolvedHeight >= 25.0;
+                feature.show = !Number.isFinite(resolvedHeight) || resolvedHeight >= BUILDING_MIN_VISIBLE_HEIGHT;
             }
         });
 
