@@ -10,7 +10,8 @@
 | [Example01-2](./example01-2/index.html) | Example01 的扩展示例 | [查看](./example01-2/index.html) |
 | [Example02](./example02/index.html) | 机场空域 3D 可视化（虹桥/浦东） | [查看](./example02/index.html) |
 | [Example03](./example03/index.html) | 飞机粒子特效（火焰/烟雾/气流） | [查看](./example03/index.html) |
-| [Example04](./example04/index.html) | 雷雨云天气飞行演示（云/雨/闪电 + 预设切换） | [查看](./example04/index.html) |
+| [Example04](./example04/index.html) | 雷雨云天气飞行演示（云层/细雨/闪电 + 预设切换） | [查看](./example04/index.html) |
+| [Example04-2](./example04-2/index.html) | Example04 扩展：rain-1 云模型加载 | [查看](./example04-2/index.html) |
 
 ## 示例说明
 
@@ -31,9 +32,13 @@
 
 ### Example04：雷雨云天气飞行演示
 - 在航线周边叠加雷雨天气（云团、细雨、闪电）
-- 云层支持不规则灰阶云团与厚度增强
-- 鼠标点击可穿透云层，优先选择飞机对象
+- 云层支持不规则云团与厚度增强
+- 鼠标点击可穿透云层，优先选中飞机对象
 - 支持天气预设切换：`drizzle`、`rainstorm`、`darkStorm`
+
+### Example04-2：rain-1 云模型加载
+- 基于 Cesium 加载 `rain_1.glb` 云模型
+- 提供一键重置视角，便于查看模型细节
 
 ## 快速开始
 
@@ -53,22 +58,21 @@ http://localhost:8080
 
 ```text
 .
-├─ index.html
-├─ README.md
-├─ example01/
-├─ example01-2/
-├─ example02/
-├─ example03/
-├─ example04/
-│  ├─ index.html
-│  ├─ css/style.css
-│  ├─ js/main.js
-│  ├─ js/weather-component.js
-│  └─ model/
-└─ public/
+├── index.html
+├── README.md
+├── example01/
+├── example01-2/
+├── example02/
+├── example03/
+├── example04/
+├── example04-2/
+│   ├── index.html
+│   ├── css/style.css
+│   ├── js/main.js
+│   └── rain-1/rain_1.glb
+└── public/
 ```
 
 ## 许可证
 
 MIT License
-
