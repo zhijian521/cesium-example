@@ -35,9 +35,9 @@ const ROUNDED_ROUTE_CONFIG = {
 };
 const BANKING_CONFIG = {
     sampleWindowSeconds: 1.2,
-    fullTurnDeltaDegrees: 18,
+    fullTurnDeltaDegrees: 20,
     minTurnDeltaDegrees: 2,
-    maxRollDegrees: 15
+    maxRollDegrees: 5
 };
 const speedBaselineMap = new WeakMap();
 const scratchBaseOrientation = new Cesium.Quaternion();
@@ -857,21 +857,21 @@ function updateFlightData(position, currentTime, airplaneName) {
 
 // 更新相机跟随 - 在飞机尾部后方上方，支持滚轮缩放
 function updateCameraFollow(position, currentTime) {
-    const cartographic = Cesium.Cartographic.fromCartesian(position);
     const currentAirplane = airplaneEntities[selectedAirplaneIndex];
     const attitude = currentAirplane ? getBankedAttitude(currentAirplane.position, currentTime) : null;
     const heading = attitude?.heading ?? 0;
-
-    // 计算相机位置：飞机斜后方上方
-    const sideAngle = Cesium.Math.toRadians(-10); // 侧偏角
-
-    // 计算斜后方位置（基于当前缩放距离）
-    const backHeading = heading - sideAngle;
-    const backLon = Cesium.Math.toDegrees(cartographic.longitude) - Math.sin(backHeading) * (cameraDistance / 111000);
-    const backLat = Cesium.Math.toDegrees(cartographic.latitude) - Math.cos(backHeading) * (cameraDistance / 111000);
-    const cameraHeight = cartographic.height + cameraHeightOffset;
-
-    const cameraPosition = Cesium.Cartesian3.fromDegrees(backLon, backLat, cameraHeight);
+    const localFrame = Cesium.Transforms.eastNorthUpToFixedFrame(position);
+    const localOffset = new Cesium.Cartesian3(
+        -Math.sin(heading) * cameraDistance,
+        -Math.cos(heading) * cameraDistance,
+        cameraHeightOffset
+    );
+    const worldOffset = Cesium.Matrix4.multiplyByPointAsVector(
+        localFrame,
+        localOffset,
+        new Cesium.Cartesian3()
+    );
+    const cameraPosition = Cesium.Cartesian3.add(position, worldOffset, new Cesium.Cartesian3());
 
     const targetUp = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(position, new Cesium.Cartesian3());
     const targetOffset = Cesium.Cartesian3.multiplyByScalar(targetUp, 16, new Cesium.Cartesian3());
