@@ -50,6 +50,11 @@ const dongfangmingzhu = {
     lat: 31.2397,
     height: 600
 };
+const routeOneCenter = {
+    lon: dongfangmingzhu.lon - 0.0195,
+    lat: dongfangmingzhu.lat,
+    height: dongfangmingzhu.height
+};
 
 // 滴水湖位置
 const dishuihu = {
@@ -629,7 +634,7 @@ function createAirplaneAndPath() {
     viewer.clock.shouldAnimate = true;
 
     // === 航线1: 东方明珠圆角四边形环线 ===
-    const roundedRoutePoints = createRoundedRectangleRoute(dongfangmingzhu, dongfangmingzhu.height);
+    const roundedRoutePoints = createRoundedRectangleRoute(routeOneCenter, routeOneCenter.height);
     const positionProperty1 = createSampledPositionProperty(roundedRoutePoints, startTime, duration);
     const pathPositions1 = roundedRoutePoints.map(point =>
         Cesium.Cartesian3.fromDegrees(point.lon, point.lat, point.height)
