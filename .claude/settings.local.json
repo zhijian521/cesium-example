@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node *)",
+      "Bash(curl -s \"https://cesium.com/downloads/cesiumjs/releases/1.112/Build/Cesium/Cesium.js\")"
+    ]
+  }
+}
