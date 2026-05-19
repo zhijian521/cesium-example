@@ -225,35 +225,10 @@ const BUILDING_SHADER_OPTIMIZED = `
 // 鍒濆鍖栧湴鍥?
 async function initMap() {
     try {
-        viewer = new Cesium.Viewer('cesiumContainer', {
-            animation: false,
-            baseLayerPicker: false,
-            fullscreenButton: false,
-            vrButton: false,
-            geocoder: false,
-            homeButton: false,
-            infoBox: false,
-            sceneModePicker: false,
-            selectionIndicator: false,
-            timeline: false,
-            navigationHelpButton: false,
-            navigationInstructionsInitiallyVisible: false,
-            shouldAnimate: true,
-            terrain: Cesium.Terrain.fromWorldTerrain(),
-            // 娓叉煋璐ㄩ噺 - 骞宠　鎬ц兘
-            msaaSamples: 2, // 2x MSAA 鎶楅敮榻?
-            contextOptions: {
-                webgl: {
-                    alpha: false,
-                    antialias: true, // 鍚敤 WebGL 鎶楅敮榻?
-                    preserveDrawingBuffer: true,
-                    powerPreference: 'high-performance'
-                }
-            }
-        });
+        viewer = createCesiumViewer('cesiumContainer');
 
         // 闅愯棌鐗堟潈淇℃伅
-        viewer.cesiumWidget.creditContainer.style.display = 'none';
+        hideCesiumCredits(viewer);
 
         // 鍒濆鍖栧満鏅晥鏋?
         initSceneEffects();
@@ -510,7 +485,7 @@ function createAirplaneAndPath() {
             stop: stopTime
         })]),
         model: {
-            uri: './model/shidi/shidi_Animi.gltf',
+            uri: '../public/models/shidi/shidi_Animi.gltf',
             scale: 5,
             minimumPixelSize: 80,
             maximumScale: 100
@@ -581,7 +556,7 @@ function createAirplaneAndPath() {
             stop: stopTime
         })]),
         model: {
-            uri: './model/shidi/shidi_Animi.gltf',
+            uri: '../public/models/shidi/shidi_Animi.gltf',
             scale: 5,
             minimumPixelSize: 80,
             maximumScale: 100

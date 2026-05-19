@@ -1,6 +1,4 @@
 ﻿// Cesium Ion Token
-Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OTAzZDRkZi00ODkyLTQ5OTUtOGE1MC1jN2JmNjc0ODdiOGUiLCJpZCI6MzMxMzk2LCJpYXQiOjE3NTUwNDgwNTV9.GH-UECFbXsiJip__VTu2oXoBmx8dt61E52q3rBakZyI";
-
 let viewer;
 let airplaneEntity;
 let pathEntity;
@@ -27,7 +25,7 @@ const trailAlignScratch = new Cesium.Cartesian3();
 const turbulenceScratch = new Cesium.Cartesian3();
 const turbulenceScratch2 = new Cesium.Cartesian3();
 
-const AIRPLANE_MODEL_URL = "../example01/model/shidi/shidi_Animi.gltf";
+const AIRPLANE_MODEL_URL = "../public/models/shidi/shidi_Animi.gltf";
 
 const LOCATIONS = {
     dongfangmingzhu: { lon: 121.4998, lat: 31.2397, height: 600 },
@@ -172,33 +170,9 @@ const PARTICLE_PRESETS = {
 
 async function initMap() {
     try {
-        viewer = new Cesium.Viewer("cesiumContainer", {
-            animation: false,
-            baseLayerPicker: false,
-            fullscreenButton: false,
-            vrButton: false,
-            geocoder: false,
-            homeButton: false,
-            infoBox: false,
-            sceneModePicker: false,
-            selectionIndicator: false,
-            timeline: false,
-            navigationHelpButton: false,
-            navigationInstructionsInitiallyVisible: false,
-            shouldAnimate: true,
-            terrain: Cesium.Terrain.fromWorldTerrain(),
-            msaaSamples: 2,
-            contextOptions: {
-                webgl: {
-                    alpha: false,
-                    antialias: true,
-                    preserveDrawingBuffer: true,
-                    powerPreference: "high-performance"
-                }
-            }
-        });
+        viewer = createCesiumViewer("cesiumContainer");
 
-        viewer.cesiumWidget.creditContainer.style.display = "none";
+        hideCesiumCredits(viewer);
 
         initSceneEffects();
         await loadBuildings();

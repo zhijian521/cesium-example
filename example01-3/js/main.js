@@ -1,6 +1,3 @@
-// Cesium Ion Token
-Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OTAzZDRkZi00ODkyLTQ5OTUtOGE1MC1jN2JmNjc0ODdiOGUiLCJpZCI6MzMxMzk2LCJpYXQiOjE3NTUwNDgwNTV9.GH-UECFbXsiJip__VTu2oXoBmx8dt61E52q3rBakZyI';
-
 // 全局变量
 let viewer;
 let airplaneEntity;
@@ -407,35 +404,10 @@ const BUILDING_SHADER_OPTIMIZED = `
 // 初始化地图
 async function initMap() {
     try {
-        viewer = new Cesium.Viewer('cesiumContainer', {
-            animation: false,
-            baseLayerPicker: false,
-            fullscreenButton: false,
-            vrButton: false,
-            geocoder: false,
-            homeButton: false,
-            infoBox: false,
-            sceneModePicker: false,
-            selectionIndicator: false,
-            timeline: false,
-            navigationHelpButton: false,
-            navigationInstructionsInitiallyVisible: false,
-            shouldAnimate: true,
-            terrain: Cesium.Terrain.fromWorldTerrain(),
-            // 渲染质量 - 平衡性能
-            msaaSamples: 2, // 2x MSAA 抗锯齿
-            contextOptions: {
-                webgl: {
-                    alpha: false,
-                    antialias: true, // 启用 WebGL 抗锯齿
-                    preserveDrawingBuffer: true,
-                    powerPreference: 'high-performance'
-                }
-            }
-        });
+        viewer = createCesiumViewer('cesiumContainer');
 
         // 隐藏版权信息
-        viewer.cesiumWidget.creditContainer.style.display = 'none';
+        hideCesiumCredits(viewer);
 
         // 初始化场景效果
         initSceneEffects();
@@ -664,7 +636,7 @@ function createAirplaneAndPath() {
             stop: stopTime
         })]),
         model: {
-            uri: './model/shidi/shidi_Animi.gltf',
+            uri: '../public/models/shidi/shidi_Animi.gltf',
             scale: 5,
             minimumPixelSize: 80,
             maximumScale: 100
@@ -734,7 +706,7 @@ function createAirplaneAndPath() {
             stop: stopTime
         })]),
         model: {
-            uri: './model/shidi/shidi_Animi.gltf',
+            uri: '../public/models/shidi/shidi_Animi.gltf',
             scale: 5,
             minimumPixelSize: 80,
             maximumScale: 100

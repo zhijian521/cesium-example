@@ -1,6 +1,4 @@
-Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OTAzZDRkZi00ODkyLTQ5OTUtOGE1MC1jN2JmNjc0ODdiOGUiLCJpZCI6MzMxMzk2LCJpYXQiOjE3NTUwNDgwNTV9.GH-UECFbXsiJip__VTu2oXoBmx8dt61E52q3rBakZyI";
-
-const MODEL_URI = "./rain-1/rain_1.glb";
+const MODEL_URI = "../public/models/weather/rain_1.glb";
 const MODEL_POSITION = {
     lon: 121.4998,
     lat: 31.2397,
@@ -85,7 +83,7 @@ function setupScene() {
     viewer.scene.skyAtmosphere.show = true;
     viewer.scene.fog.enabled = true;
     viewer.scene.postProcessStages.fxaa.enabled = true;
-    viewer.cesiumWidget.creditContainer.style.display = "none";
+    hideCesiumCredits(viewer);
 }
 
 function setupControls() {
@@ -99,19 +97,10 @@ function setupControls() {
 
 async function init() {
     try {
-        viewer = new Cesium.Viewer("cesiumContainer", {
-            animation: false,
-            timeline: false,
-            homeButton: false,
-            sceneModePicker: false,
-            navigationHelpButton: false,
+        viewer = createCesiumViewer("cesiumContainer", {
             baseLayerPicker: true,
-            geocoder: false,
-            fullscreenButton: false,
-            selectionIndicator: false,
-            infoBox: false,
-            shouldAnimate: true,
-            msaaSamples: 4
+            msaaSamples: 4,
+            terrain: null,
         });
 
         setupScene();
@@ -121,7 +110,7 @@ async function init() {
         hideLoading();
     } catch (error) {
         console.error("加载 rain-1 模型失败:", error);
-        showLoadingError("加载失败：请检查 rain_1.glb 是否存在");
+        showLoadingError("加载失败：请检查 public/models/weather/rain_1.glb 是否存在");
     }
 }
 

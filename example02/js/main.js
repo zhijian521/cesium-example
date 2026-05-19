@@ -97,34 +97,10 @@ async function init() {
 }
 
 function initViewer() {
-    state.viewer = new Cesium.Viewer('cesiumContainer', {
-        animation: false,
-        baseLayerPicker: false,
-        fullscreenButton: false,
-        vrButton: false,
-        geocoder: false,
-        homeButton: false,
-        infoBox: false,
-        sceneModePicker: false,
-        selectionIndicator: false,
-        timeline: false,
-        navigationHelpButton: false,
-        navigationInstructionsInitiallyVisible: false,
-        shouldAnimate: true,
-        terrain: Cesium.Terrain.fromWorldTerrain(),
-        msaaSamples: 2,
-        contextOptions: {
-            webgl: {
-                alpha: false,
-                antialias: true,
-                preserveDrawingBuffer: true,
-                powerPreference: 'high-performance'
-            }
-        }
-    });
+    state.viewer = createCesiumViewer('cesiumContainer');
 
     // 隐藏版权信息
-    state.viewer.cesiumWidget.creditContainer.style.display = 'none';
+    hideCesiumCredits(state.viewer);
 }
 
 function initScene() {
