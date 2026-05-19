@@ -57,7 +57,7 @@ const WEATHER_SAMPLE_ANCHORS = [
     { lon: 121.488, lat: 31.228, radiusMeters: 820, label: '陆家嘴南侧' }
 ];
 
-// 鍒濆鍖栧湴鍥?
+// 初始化地图
 async function initMap() {
     try {
         viewer = new Cesium.Viewer('cesiumContainer', {
@@ -87,10 +87,10 @@ async function initMap() {
             }
         });
 
-        // 闅愯棌鐗堟潈淇℃伅
+        // 隐藏版权信息
         viewer.cesiumWidget.creditContainer.style.display = 'none';
 
-        // 鍒濆鍖栧満鏅晥鏋?
+        // 初始化场景效果
         initSceneEffects();
 
         weatherComponent = createWeatherEffectComponent(viewer, {
@@ -102,7 +102,7 @@ async function initMap() {
         // 鍔犺浇寤虹瓚
         await loadBuildings();
 
-        // 鍒涘缓椋炴満鍜岃埅绾?
+        // 创建飞机和航线
         createAirplaneAndPath();
 
         // 璁剧疆浜嬩欢鐩戝惉
@@ -111,10 +111,10 @@ async function initMap() {
         // 寮€濮嬫洿鏂板惊鐜?
         viewer.scene.preRender.addEventListener(updateFrame);
 
-        // 鍒濆瑙嗚
+        // 初始视角
         flyToOverview();
 
-        // 闅愯棌鍔犺浇鎻愮ず
+        // 隐藏加载提示
         setTimeout(() => {
             document.getElementById('loading').style.display = 'none';
         }, 2000);
@@ -125,7 +125,7 @@ async function initMap() {
     }
 }
 
-// 鍒濆鍖栧満鏅晥鏋?
+// 初始化场景效果
 function initSceneEffects() {
     const scene = viewer.scene;
 
@@ -165,7 +165,7 @@ function initSceneEffects() {
     // 鍚敤鎶楅敮榻?
     scene.postProcessStages.fxaa.enabled = true;
 
-    // 鍒嗚鲸鐜囨瘮渚?- 瓒呴珮娓呰缃?
+    // 分辨率比率 - 超高设置
     viewer.resolutionScale = 1.5;
 
     // 鍦板舰缁嗚妭 - 閫備腑
@@ -278,7 +278,7 @@ async function loadBuildings() {
     }
 }
 
-// 鍒涘缓椋炴満鍜岃埅绾?
+// 创建飞机和航线
 function createAirplaneAndPath() {
     weatherComponent?.clearAllEffects();
 
@@ -321,7 +321,7 @@ function createAirplaneAndPath() {
     weatherComponent?.createOnRing(pathPositions1);
     weatherComponent?.createFromAnchors(WEATHER_SAMPLE_ANCHORS);
 
-    // 鍒涘缓鑸嚎1
+    // 创建航线1
     pathEntity = viewer.entities.add({
         name: '东方明珠环线 - 航线',
         polyline: {
@@ -336,7 +336,7 @@ function createAirplaneAndPath() {
     });
     pathEntities.push(pathEntity);
 
-    // 鍒涘缓椋炴満1
+    // 创建飞机1
     airplaneEntity = viewer.entities.add({
         name: '东方明珠环线 - 飞机',
         position: positionProperty1,
@@ -392,7 +392,7 @@ function createAirplaneAndPath() {
         pathPositions2.push(Cesium.Cartesian3.fromDegrees(lon, lat, 800));
     }
 
-    // 鍒涘缓鑸嚎2
+    // 创建航线2
     const pathEntity2 = viewer.entities.add({
         name: '滴水湖到崇明岛 - 航线',
         polyline: {
@@ -407,7 +407,7 @@ function createAirplaneAndPath() {
     });
     pathEntities.push(pathEntity2);
 
-    // 鍒涘缓椋炴満2
+    // 创建飞机2
     const airplaneEntity2 = viewer.entities.add({
         name: '滴水湖到崇明岛 - 飞机',
         position: positionProperty2,
@@ -895,7 +895,7 @@ function setupEventListeners() {
 
     setupWeatherPresetControl();
 
-    // 鍗曞嚮 - 鏄剧ず/闅愯棌淇℃伅闈㈡澘鎴栬В閿?
+    // 单击 - 显示/隐藏信息面板或解锁
     handler.setInputAction(function (click) {
         const resolvedIndex = resolvePickedAirplaneIndex(click.position);
         if (resolvedIndex !== -1) {
@@ -933,7 +933,7 @@ function setupEventListeners() {
     }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
 }
 
-// 鍒囨崲鐩告満閿佸畾
+// 切换相机锁定
 function toggleCameraLock() {
     isCameraLocked = !isCameraLocked;
     const cameraHint = document.getElementById('cameraHint');
