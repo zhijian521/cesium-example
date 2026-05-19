@@ -1,9 +1,7 @@
+// Cesium Ion Token
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OTAzZDRkZi00ODkyLTQ5OTUtOGE1MC1jN2JmNjc0ODdiOGUiLCJpZCI6MzMxMzk2LCJpYXQiOjE3NTUwNDgwNTV9.GH-UECFbXsiJip__VTu2oXoBmx8dt61E52q3rBakZyI';
 
-﻿// Cesium Ion Token
-
-
-// 鍏ㄥ眬鍙橀噺
+// 全局变量
 let viewer;
 let airplaneEntity;
 let pathEntity;
@@ -16,11 +14,11 @@ let buildingCustomShader;
 let isNightMode = true;
 let weatherComponent;
 let ringPathPositions = [];
-let selectedAirplaneIndex = 0; // 褰撳墠閫変腑鐨勯鏈虹储寮?
-let cameraDistance = 500; // 鐩告満璺熼殢璺濈锛堢背锛?
-let cameraHeightOffset = 200; // 鐩告満楂樺害鍋忕Щ锛堢背锛?
+let selectedAirplaneIndex = 0; // 当前选中的飞机索�?
+let cameraDistance = 500; // 相机跟随距离（米�?
+let cameraHeightOffset = 200; // 相机高度偏移（米�?
 
-// 涓滄柟鏄庣彔浣嶇疆
+// 东方明珠位置
 const INFO_PANEL_OFFSET_Y_MIN = 20;
 const INFO_PANEL_OFFSET_Y_MAX = 200;
 const INFO_PANEL_DISTANCE_MIN = 300;
@@ -47,17 +45,17 @@ const STORM_EFFECT_CONFIG = {
 
 const WEATHER_PRESET = 'rainstorm';
 const WEATHER_PRESET_LABELS = {
-    drizzle: '小雨云',
-    rainstorm: '雷阵雨云',
-    darkStorm: '厚乌云'
+    drizzle: 'С����',
+    rainstorm: '��������',
+    darkStorm: '������'
 };
 
 const WEATHER_SAMPLE_ANCHORS = [
-    { lon: 121.4998, lat: 31.2397, radiusMeters: 920, label: '东方明珠周边' },
-    { lon: 121.488, lat: 31.228, radiusMeters: 820, label: '陆家嘴南侧' }
+    { lon: 121.4998, lat: 31.2397, radiusMeters: 920, label: '���������ܱ�' },
+    { lon: 121.488, lat: 31.228, radiusMeters: 820, label: '½�����ϲ�' }
 ];
 
-// 初始化地图
+// 初始化地�?
 async function initMap() {
     try {
         viewer = new Cesium.Viewer('cesiumContainer', {
@@ -75,12 +73,12 @@ async function initMap() {
             navigationInstructionsInitiallyVisible: false,
             shouldAnimate: true,
             terrain: Cesium.Terrain.fromWorldTerrain(),
-            // 娓叉煋璐ㄩ噺 - 骞宠　鎬ц兘
-            msaaSamples: 2, // 2x MSAA 鎶楅敮榻?
+            // 渲染质量 - 平衡性能
+            msaaSamples: 2, // 2x MSAA 抗锯�?
             contextOptions: {
                 webgl: {
                     alpha: false,
-                    antialias: true, // 鍚敤 WebGL 鎶楅敮榻?
+                    antialias: true, // 启用 WebGL 抗锯�?
                     preserveDrawingBuffer: true,
                     powerPreference: 'high-performance'
                 }
@@ -90,7 +88,7 @@ async function initMap() {
         // 隐藏版权信息
         viewer.cesiumWidget.creditContainer.style.display = 'none';
 
-        // 初始化场景效果
+        // 初始化场景效�?
         initSceneEffects();
 
         weatherComponent = createWeatherEffectComponent(viewer, {
@@ -99,16 +97,16 @@ async function initMap() {
             config: STORM_EFFECT_CONFIG
         });
 
-        // 鍔犺浇寤虹瓚
+        // 加载建筑
         await loadBuildings();
 
-        // 创建飞机和航线
+        // 创建飞机和航�?
         createAirplaneAndPath();
 
-        // 璁剧疆浜嬩欢鐩戝惉
+        // 设置事件监听
         setupEventListeners();
 
-        // 寮€濮嬫洿鏂板惊鐜?
+        // 开始更新循�?
         viewer.scene.preRender.addEventListener(updateFrame);
 
         // 初始视角
@@ -120,12 +118,12 @@ async function initMap() {
         }, 2000);
 
     } catch (error) {
-        console.error('鍒濆鍖栧け璐?', error);
-        document.getElementById('loading').innerText = '加载失败';
+        console.error('初始化失�?', error);
+        document.getElementById('loading').innerText = '����ʧ��';
     }
 }
 
-// 初始化场景效果
+// 初始化场景效�?
 function initSceneEffects() {
     const scene = viewer.scene;
 
@@ -133,45 +131,45 @@ function initSceneEffects() {
     scene.globe.depthTestAgainstTerrain = true;
     scene.highDynamicRange = true;
 
-    // 涓诲厜婧?- 妯℃嫙闃冲厜鏂滃皠锛屼骇鐢熸槑鏄惧厜褰?
+    // 主光�?- 模拟阳光斜射，产生明显光�?
     scene.light = new Cesium.DirectionalLight({
         direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
         intensity: 2.5
     });
 
-    // 鑳屾櫙鑹?- 璋冧寒
+    // 背景�?- 调亮
     scene.backgroundColor = new Cesium.Color(0.05, 0.08, 0.15, 1.0);
 
-    // 闆炬晥
+    // 雾效
     scene.fog.enabled = true;
     scene.fog.density = 0.00015;
     scene.fog.minimumBrightness = 0.2;
 
-    // 闃村奖璁剧疆
+    // 阴影设置
     scene.shadowMap.enabled = true;
     scene.shadowMap.size = 2048;
     scene.shadowMap.softShadows = true;
     scene.shadowMap.darkness = 0.4;
 
-    // 鐜鍏?- 澧炲姞鏁翠綋浜害
+    // 环境�?- 增加整体亮度
     scene.globe.dynamicAtmosphereLighting = true;
     scene.globe.dynamicAtmosphereLightingFromSun = true;
 
-    // 鏇濆厜鍜岃壊璋冩槧灏?- 鎻愪寒鐢婚潰
+    // 曝光和色调映�?- 提亮画面
     scene.hdr = true;
     scene.globe.maximumScreenSpaceError = 2;
 
-    // === 娓呮櫚搴︿笌鎬ц兘骞宠　 ===
-    // 鍚敤鎶楅敮榻?
+    // === 清晰度与性能平衡 ===
+    // 启用抗锯�?
     scene.postProcessStages.fxaa.enabled = true;
 
-    // 分辨率比率 - 超高设置
+    // 分辨率比�?- 超高清设�?
     viewer.resolutionScale = 1.5;
 
-    // 鍦板舰缁嗚妭 - 閫備腑
+    // 地形细节 - 适中
     scene.globe.maximumScreenSpaceError = 4;
 
-    // 鐡︾墖缂撳瓨
+    // 瓦片缓存
     scene.globe.tileCacheSize = 384;
     applySceneMode(isNightMode);
 }
@@ -222,11 +220,11 @@ function toggleSceneMode() {
 function updateSceneModeButton() {
     const button = document.getElementById('btnSceneMode');
     if (button) {
-        button.textContent = isNightMode ? '切换到白天' : '切换到夜晚';
+        button.textContent = isNightMode ? '�л�������' : '�л���ҹ��';
     }
 }
 
-// 鍔犺浇3D寤虹瓚
+// 加载3D建筑
 async function loadBuildings() {
     try {
         const osmBuildings = await Cesium.createOsmBuildingsAsync(viewer);
@@ -270,15 +268,15 @@ async function loadBuildings() {
             }
         });
 
-        osmBuildings.maximumScreenSpaceError = 8; // 寤虹瓚缁嗚妭绮惧害锛堝钩琛★級
+        osmBuildings.maximumScreenSpaceError = 8; // 建筑细节精度（平衡）
         viewer.scene.primitives.add(osmBuildings);
 
     } catch (error) {
-        console.error('鍔犺浇寤虹瓚澶辫触:', error);
+        console.error('加载建筑失败:', error);
     }
 }
 
-// 创建飞机和航线
+// 创建飞机和航�?
 function createAirplaneAndPath() {
     weatherComponent?.clearAllEffects();
 
@@ -286,15 +284,15 @@ function createAirplaneAndPath() {
     const duration = 60;
     const stopTime = Cesium.JulianDate.addSeconds(startTime, duration, new Cesium.JulianDate());
 
-    // 璁剧疆鏃堕挓
+    // 设置时钟
     viewer.clock.startTime = startTime.clone();
     viewer.clock.stopTime = stopTime.clone();
     viewer.clock.currentTime = startTime.clone();
     viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-    viewer.clock.multiplier = 0.3; // 0.3鍊嶉€?
+    viewer.clock.multiplier = 0.3; // 0.3倍�?
     viewer.clock.shouldAnimate = true;
 
-    // === 鑸嚎1: 涓滄柟鏄庣彔鐜嚎 ===
+    // === 航线1: 东方明珠环线 ===
     const numPoints = 100;
     const positionProperty1 = new Cesium.SampledPositionProperty();
     positionProperty1.setInterpolationOptions({
@@ -323,7 +321,7 @@ function createAirplaneAndPath() {
 
     // 创建航线1
     pathEntity = viewer.entities.add({
-        name: '东方明珠环线 - 航线',
+        name: '�������黷�� - ����',
         polyline: {
             positions: pathPositions1,
             width: 3,
@@ -338,7 +336,7 @@ function createAirplaneAndPath() {
 
     // 创建飞机1
     airplaneEntity = viewer.entities.add({
-        name: '东方明珠环线 - 飞机',
+        name: '�������黷�� - �ɻ�',
         position: positionProperty1,
         availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
             start: startTime,
@@ -355,8 +353,8 @@ function createAirplaneAndPath() {
     airplaneEntities.push(airplaneEntity);
     createTailBreathingEffectForAirplane(airplaneEntity, 0);
 
-    // === 鑸嚎2: 婊存按婀栧埌宕囨槑宀涳紙寰€杩旓級 ===
-    const numPoints2 = 1000; // 澧炲姞閲囨牱鐐癸紝澶у箙闄嶄綆閫熷害锛堥檷浣?0%锛?
+    // === 航线2: 滴水湖到崇明岛（往返） ===
+    const numPoints2 = 1000; // 增加采样点，大幅降低速度（降�?0%�?
     const positionProperty2 = new Cesium.SampledPositionProperty();
     positionProperty2.setInterpolationOptions({
         interpolationDegree: 5,
@@ -366,7 +364,7 @@ function createAirplaneAndPath() {
     const pathPositions2 = [];
     const halfPoints = Math.floor(numPoints2 / 2);
 
-    // 鍘荤▼锛氭淮姘存箹 -> 宕囨槑宀?
+    // 去程：滴水湖 -> 崇明�?
     for (let i = 0; i <= halfPoints; i++) {
         const t = i / halfPoints;
         const lon = dishuihu.lon + (chongmingdao.lon - dishuihu.lon) * t;
@@ -379,7 +377,7 @@ function createAirplaneAndPath() {
         pathPositions2.push(Cesium.Cartesian3.fromDegrees(lon, lat, 800));
     }
 
-    // 杩旂▼锛氬磭鏄庡矝 -> 婊存按婀?
+    // 返程：崇明岛 -> 滴水�?
     for (let i = halfPoints; i <= numPoints2; i++) {
         const t = (i - halfPoints) / (numPoints2 - halfPoints);
         const lon = chongmingdao.lon + (dishuihu.lon - chongmingdao.lon) * t;
@@ -394,7 +392,7 @@ function createAirplaneAndPath() {
 
     // 创建航线2
     const pathEntity2 = viewer.entities.add({
-        name: '滴水湖到崇明岛 - 航线',
+        name: '��ˮ���������� - ����',
         polyline: {
             positions: pathPositions2,
             width: 3,
@@ -409,7 +407,7 @@ function createAirplaneAndPath() {
 
     // 创建飞机2
     const airplaneEntity2 = viewer.entities.add({
-        name: '滴水湖到崇明岛 - 飞机',
+        name: '��ˮ���������� - �ɻ�',
         position: positionProperty2,
         availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
             start: startTime,
@@ -431,7 +429,7 @@ function createTailBreathingEffectForAirplane(airplane, airplaneIndex) {
     for (let layer = 0; layer < TAIL_RIPPLE_CONFIG.layerCount; layer++) {
         const layerProgressOffset = layer / TAIL_RIPPLE_CONFIG.layerCount;
         const tailEffect = viewer.entities.add({
-            name: `椋炴満灏鹃儴姘存尝绾圭壒鏁?${airplaneIndex + 1}-${layer + 1}`,
+            name: `飞机尾部水波纹特�?${airplaneIndex + 1}-${layer + 1}`,
             position: new Cesium.CallbackProperty((time) => getTailRipplePosition(airplane, time), false),
             ellipsoid: {
                 radii: new Cesium.CallbackProperty((time) => {
@@ -453,7 +451,7 @@ function createTailBreathingEffectForAirplane(airplane, airplaneIndex) {
     }
 
     const warningIconEntity = viewer.entities.add({
-        name: `椋炴満棰勮鍥炬爣-${airplaneIndex + 1}`,
+        name: `飞机预警图标-${airplaneIndex + 1}`,
         position: new Cesium.CallbackProperty((time) => getTailRipplePosition(airplane, time), false),
         billboard: {
             image: WARNING_ICON_DATA_URL,
@@ -632,11 +630,11 @@ function isAirplaneAbnormal(airplane, time) {
     return alertState.isAbnormal;
 }
 
-// 姣忓抚鏇存柊
+// 每帧更新
 function updateFrame() {
     if (!airplaneEntities.length) return;
 
-    // 鏇存柊褰撳墠閫変腑鐨勯鏈?
+    // 更新当前选中的飞�?
     const currentAirplane = airplaneEntities[selectedAirplaneIndex];
     if (!currentAirplane) return;
 
@@ -645,21 +643,21 @@ function updateFrame() {
 
     if (!position) return;
 
-    // 鏇存柊淇℃伅闈㈡澘浣嶇疆
+    // 更新信息面板位置
     if (infoPanelVisible) {
         updateInfoPanelPosition(position);
     }
 
-    // 鏇存柊椋炶鏁版嵁
+    // 更新飞行数据
     updateFlightData(position, currentTime, currentAirplane.name);
 
-    // 鐩告満璺熼殢
+    // 相机跟随
     if (isCameraLocked) {
         updateCameraFollow(position, currentTime);
     }
 }
 
-// 鏇存柊淇℃伅闈㈡澘浣嶇疆
+// 更新信息面板位置
 function updateInfoPanelPosition(position) {
     const flightInfo = document.getElementById('flightInfo');
     const canvas = viewer.scene.canvas;
@@ -684,7 +682,7 @@ function updateInfoPanelPosition(position) {
     }
 }
 
-// 鏇存柊椋炶鏁版嵁
+// 更新飞行数据
 function calculateSpeedKmh(currentAirplane, currentTime, currentPosition) {
     const sampleOffsetSeconds = 0.5;
     const previousTime = Cesium.JulianDate.addSeconds(currentTime, -sampleOffsetSeconds, new Cesium.JulianDate());
@@ -732,7 +730,7 @@ function updateFlightData(position, currentTime, airplaneName) {
     const cartographic = Cesium.Cartographic.fromCartesian(position);
     const height = cartographic.height;
 
-    // 璁＄畻鑸悜
+    // 计算航向
     const currentAirplane = airplaneEntities[selectedAirplaneIndex];
     if (!currentAirplane) return;
 
@@ -755,21 +753,21 @@ function updateFlightData(position, currentTime, airplaneName) {
         if (heading < 0) heading += 360;
     }
 
-    // 鏇存柊UI
-    document.getElementById('airplaneName').innerText = airplaneName || '未知';
+    // 更新UI
+    document.getElementById('airplaneName').innerText = airplaneName || 'δ֪';
     document.getElementById('speed').innerText = speedKmh + ' km/h';
     document.getElementById('altitude').innerText = Math.round(height) + ' m';
-    document.getElementById('heading').innerText = Math.round(heading) + '°';
+    document.getElementById('heading').innerText = Math.round(heading) + '��';
 
     const isAbnormal = isAirplaneAbnormal(currentAirplane, currentTime);
-    document.getElementById('systemStatus').innerText = isAbnormal ? '异常告警' : '正常';
+    document.getElementById('systemStatus').innerText = isAbnormal ? '�쳣�澯' : '����';
 }
 
-// 鏇存柊鐩告満璺熼殢 - 鍦ㄩ鏈哄熬閮ㄥ悗鏂逛笂鏂癸紝鏀寔婊氳疆缂╂斁
+// 更新相机跟随 - 在飞机尾部后方上方，支持滚轮缩放
 function updateCameraFollow(position, currentTime) {
     const cartographic = Cesium.Cartographic.fromCartesian(position);
 
-    // 璁＄畻椋炴満鐨勬柟鍚戯紙鑸悜锛?
+    // 计算飞机的方向（航向�?
     const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.1, new Cesium.JulianDate());
     const currentAirplane = airplaneEntities[selectedAirplaneIndex];
     const nextPosition = currentAirplane.position.getValue(nextTime);
@@ -784,10 +782,10 @@ function updateCameraFollow(position, currentTime) {
         );
     }
 
-    // 璁＄畻鐩告満浣嶇疆锛氶鏈烘枩鍚庢柟涓婃柟
-    const sideAngle = Cesium.Math.toRadians(-10); // 渚у亸瑙?
+    // 计算相机位置：飞机斜后方上方
+    const sideAngle = Cesium.Math.toRadians(-10); // 侧偏�?
 
-    // 璁＄畻鏂滃悗鏂逛綅缃紙鍩轰簬褰撳墠缂╂斁璺濈锛?
+    // 计算斜后方位置（基于当前缩放距离�?
     const backHeading = heading - sideAngle;
     const backLon = Cesium.Math.toDegrees(cartographic.longitude) - Math.sin(backHeading) * (cameraDistance / 111000);
     const backLat = Cesium.Math.toDegrees(cartographic.latitude) - Math.cos(backHeading) * (cameraDistance / 111000);
@@ -813,7 +811,7 @@ function updateCameraFollow(position, currentTime) {
     });
 }
 
-// 椋炲埌鎬昏瑙嗚
+// 飞到总览视角
 function flyToOverview() {
     viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(121.4998, 31.2097, 3000),
@@ -826,7 +824,7 @@ function flyToOverview() {
     });
 }
 
-// 璁剧疆浜嬩欢鐩戝惉
+// 设置事件监听
 function resolvePickedAirplaneIndex(clickPosition) {
     if (weatherComponent) {
         return weatherComponent.resolvePickedAirplaneIndex(
@@ -895,7 +893,7 @@ function setupEventListeners() {
 
     setupWeatherPresetControl();
 
-    // 单击 - 显示/隐藏信息面板或解锁
+    // 单击 - 显示/隐藏信息面板或解�?
     handler.setInputAction(function (click) {
         const resolvedIndex = resolvePickedAirplaneIndex(click.position);
         if (resolvedIndex !== -1) {
@@ -912,16 +910,16 @@ function setupEventListeners() {
         if (isCameraLocked) {
             infoPanelVisible = false;
             flightInfo.classList.remove('show');
-            // 閿佸畾鐘舵€佷笅鐐瑰嚮鍏朵粬鍦版柟 - 瑙ｉ攣
+            // 锁定状态下点击其他地方 - 解锁
             unlockCamera();
         } else {
-            // 鍏朵粬鎯呭喌鍏抽棴闈㈡澘
+            // 其他情况关闭面板
             infoPanelVisible = false;
             flightInfo.classList.remove('show');
         }
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-    // 鍙屽嚮 - 閿佸畾/瑙ｉ攣瑙嗚
+    // 双击 - 锁定/解锁视角
     handler.setInputAction(function (click) {
         const resolvedIndex = resolvePickedAirplaneIndex(click.position);
         if (resolvedIndex !== -1) {
@@ -941,39 +939,39 @@ function toggleCameraLock() {
     if (isCameraLocked) {
         viewer.scene.screenSpaceCameraController.enableInputs = false;
         cameraHint.classList.add('show');
-        // 娣诲姞婊氳疆缂╂斁鐩戝惉
+        // 添加滚轮缩放监听
         viewer.canvas.addEventListener('wheel', handleCameraZoom, { passive: false });
     } else {
         unlockCamera();
     }
 }
 
-// 瑙ｉ攣鐩告満
+// 解锁相机
 function unlockCamera() {
     isCameraLocked = false;
 
     viewer.scene.screenSpaceCameraController.enableInputs = true;
     document.getElementById('cameraHint').classList.remove('show');
-    // 绉婚櫎婊氳疆缂╂斁鐩戝惉
+    // 移除滚轮缩放监听
     viewer.canvas.removeEventListener('wheel', handleCameraZoom);
 }
 
-// 澶勭悊鐩告満婊氳疆缂╂斁
+// 处理相机滚轮缩放
 function handleCameraZoom(e) {
     if (!isCameraLocked) return;
 
     e.preventDefault();
 
-    // 婊氳疆鍚戜笂锛堣礋鍊硷級= 鏀惧ぇ锛堝噺灏忚窛绂伙級锛屽悜涓嬶紙姝ｅ€硷級= 缂╁皬锛堝鍔犺窛绂伙級
-    const zoomSpeed = 30; // 缂╂斁閫熷害
+    // 滚轮向上（负值）= 放大（减小距离），向下（正值）= 缩小（增加距离）
+    const zoomSpeed = 30; // 缩放速度
     const delta = e.deltaY > 0 ? zoomSpeed : -zoomSpeed;
 
-    // 鏇存柊璺濈鍜岄珮搴︼紙淇濇寔瑙嗚姣斾緥锛?
+    // 更新距离和高度（保持视角比例�?
     cameraDistance = Math.max(CAMERA_DISTANCE_MIN, Math.min(CAMERA_DISTANCE_MAX, cameraDistance + delta));
-    cameraHeightOffset = cameraDistance * 0.4; // 淇濇寔楂樺害涓庤窛绂荤殑姣斾緥
+    cameraHeightOffset = cameraDistance * 0.4; // 保持高度与距离的比例
 }
 
-// 鍚姩
+// 启动
 document.addEventListener('DOMContentLoaded', initMap);
 
 
