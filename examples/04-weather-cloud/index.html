@@ -5,22 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Example04-2 · rain-1 模型加载</title>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.112/Build/Cesium/Widgets/widgets.css">
+    <link rel="stylesheet" href="../../shared/styles/flight-style.css">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <div id="loading" class="loading">正在加载 rain-1 模型...</div>
+    <div id="loading" class="loading">
+        <span class="loading-spinner"></span>
+        <span>LOADING...</span>
+    </div>
 
     <div class="panel">
-        <h3>Example04-2 · rain-1</h3>
-        <p>模型：<code>example04-2/rain-1/rain_1.glb</code></p>
-        <p>左键拖动旋转，滚轮缩放，右键平移。</p>
-        <button id="btnResetView" type="button">重置视角</button>
+        <div class="panel-header">
+            <span class="panel-badge">🌧</span>
+            <h3>rain-1 云模型</h3>
+        </div>
+        <div class="panel-section">
+            <p>模型：<code>rain_1.glb</code></p>
+            <p class="hint">左键拖动旋转 · 滚轮缩放 · 右键平移</p>
+        </div>
     </div>
+
+    <!-- 重置视角按钮 -->
+    <button id="btnResetView" class="overview-fab">🔭 重置视角</button>
 
     <div id="cesiumContainer"></div>
 
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.112/Build/Cesium/Cesium.js"></script>
     <script src="../../shared/config/constants.js"></script>
+    <script src="../../shared/SceneManager.js"></script>
     <script src="./main.js"></script>
 </body>
 </html>
