@@ -160,25 +160,25 @@ html, body, #cesiumContainer {
     letter-spacing: 0.2px;
 }
 
-/* 速度大号显示 */
+/* 速度大号显示 — 用 ID 选择器自然覆盖 .info-row .value */
 .info-row.highlight {
     padding: 6px 0 8px;
 }
 
-.speed-display {
-    font-size: 24px !important;
-    font-weight: 700 !important;
-    color: #00d4ff !important;
+#speed {
+    font-size: 24px;
+    font-weight: 700;
+    color: #00d4ff;
     line-height: 1;
     text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
-    letter-spacing: -0.5px !important;
+    letter-spacing: -0.5px;
 }
 
-/* 航班号特殊样式 */
-.flight-no {
-    color: #ffd60a !important;
-    font-weight: 700 !important;
-    letter-spacing: 1px !important;
+/* 航班号高亮 */
+#flightNo {
+    color: #ffd60a;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 /* --- 状态指示 --- */
@@ -220,7 +220,7 @@ html, body, #cesiumContainer {
 }
 
 .flight-info.warning #systemStatus {
-    color: #ff6b60 !important;
+    color: #ff6b60;
 }
 
 /* ================================================================
@@ -326,7 +326,7 @@ html, body, #cesiumContainer {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 24px;
+    border-radius: 10px;
     background: linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(100, 100, 255, 0.04));
     opacity: 0;
     transition: opacity 0.3s ease;

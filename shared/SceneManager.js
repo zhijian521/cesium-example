@@ -56,7 +56,6 @@ const SceneManager = (function () {
 
     // === 默认配置 ===
     const DEFAULTS = {
-        cesiumAccessToken: '',
         terrainProvider: null,
         customShaderText: BUILDING_SHADER,
         envTextureDay: '../../assets/images/sky.jpg',
@@ -248,11 +247,10 @@ const SceneManager = (function () {
 
     // === 飞行动画 ===
     function flyTo(destination, orientation, duration) {
-        const dur = duration || DEFAULTS.flyToDuration;
         viewer.camera.flyTo({
             destination: destination,
             orientation: orientation || {},
-            duration: dur
+            duration: duration || DEFAULTS.flyToDuration
         });
     }
 

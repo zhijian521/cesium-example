@@ -146,26 +146,24 @@ const FlightTracker = (function () {
         }
     }
 
-    // === 速度计算 ===
+    // === 速度计算（前后双向采样取最优） ===
     function calculateSpeedKmh(entity, currentTime, currentPosition) {
-        const sampleOffsetSeconds = 0.5;
-        const previousTime = Cesium.JulianDate.addSeconds(currentTime, -sampleOffsetSeconds, new Cesium.JulianDate());
-        const nextTime = Cesium.JulianDate.addSeconds(currentTime, sampleOffsetSeconds, new Cesium.JulianDate());
+        const offset = 0.5;
+        const prevTime = Cesium.JulianDate.addSeconds(currentTime, -offset, new Cesium.JulianDate());
+        const nextTime = Cesium.JulianDate.addSeconds(currentTime, offset, new Cesium.JulianDate());
 
-        const previousPosition = entity.position.getValue(previousTime);
-        const nextPosition = entity.position.getValue(nextTime);
+        const prevPos = entity.position.getValue(prevTime);
+        const nextPos = entity.position.getValue(nextTime);
 
-        if (previousPosition && nextPosition) {
-            const distanceMeters = Cesium.Cartesian3.distance(previousPosition, nextPosition);
-            return (distanceMeters / (sampleOffsetSeconds * 2)) * 3.6;
+        // 优先双向采样（更平滑），降级到单向
+        if (prevPos && nextPos) {
+            return (Cesium.Cartesian3.distance(prevPos, nextPos) / (offset * 2)) * 3.6;
         }
-        if (nextPosition) {
-            const distanceMeters = Cesium.Cartesian3.distance(currentPosition, nextPosition);
-            return (distanceMeters / sampleOffsetSeconds) * 3.6;
+        if (nextPos) {
+            return (Cesium.Cartesian3.distance(currentPosition, nextPos) / offset) * 3.6;
         }
-        if (previousPosition) {
-            const distanceMeters = Cesium.Cartesian3.distance(previousPosition, currentPosition);
-            return (distanceMeters / sampleOffsetSeconds) * 3.6;
+        if (prevPos) {
+            return (Cesium.Cartesian3.distance(prevPos, currentPosition) / offset) * 3.6;
         }
         return config.targetSpeedKmh;
     }

@@ -99,21 +99,9 @@ const TailEffect = (function () {
         return Cesium.Math.clamp(targetSize, TAIL_RIPPLE_CONFIG.warningIconMinSizePx, TAIL_RIPPLE_CONFIG.warningIconMaxSizePx);
     }
 
-    // === 涟漪位置（飞机尾部偏移） ===
+    // === 涟漪位置（飞机尾部） ===
     function getRipplePosition(viewer, airplane, time) {
-        const pos = airplane.position.getValue(time);
-        if (!pos) return null;
-
-        if (!TAIL_RIPPLE_CONFIG.centerOffsetRatio) return pos;
-
-        const up = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(pos, new Cesium.Cartesian3());
-        const metrics = getAirplaneVisualMetrics(viewer, airplane, time, pos);
-        const offset = Cesium.Cartesian3.multiplyByScalar(
-            up,
-            metrics.visualRadius * TAIL_RIPPLE_CONFIG.centerOffsetRatio,
-            new Cesium.Cartesian3()
-        );
-        return Cesium.Cartesian3.add(pos, offset, new Cesium.Cartesian3());
+        return airplane.position.getValue(time);
     }
 
     // === 涟漪视觉状态 ===
@@ -200,7 +188,6 @@ const TailEffect = (function () {
      * @returns {Cesium.Entity[]} 创建的特效实体数组
      */
     function attach(viewer, airplane, options) {
-        const opts = options || {};
         viewerForAbnormal = viewer;
         const entities = [];
 

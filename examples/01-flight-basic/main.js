@@ -5,7 +5,6 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 
 let viewer;
 let airplaneEntity;
-let pathEntity;
 
 // === 启动 ===
 document.addEventListener('DOMContentLoaded', async function () {
@@ -21,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             name: '东方明珠环线'
         });
         airplaneEntity = flight.airplaneEntity;
-        pathEntity = flight.pathEntity;
 
         // 3. 附加尾部预警特效
         TailEffect.attach(viewer, airplaneEntity);
