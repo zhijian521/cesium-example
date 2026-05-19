@@ -207,6 +207,7 @@ const SceneManager = (function () {
         const scene = viewer.scene;
 
         if (isNightMode) {
+            scene.backgroundColor = new Cesium.Color(0.05, 0.08, 0.15, 1.0);
             scene.light = new Cesium.DirectionalLight({
                 direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
                 intensity: 0.50
@@ -222,6 +223,7 @@ const SceneManager = (function () {
                 buildingCustomShader.setUniform('u_isDark', true);
             }
         } else {
+            scene.backgroundColor = new Cesium.Color(0.35, 0.55, 0.85, 1.0);
             scene.light = new Cesium.DirectionalLight({
                 direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
                 intensity: 2.5
@@ -237,6 +239,8 @@ const SceneManager = (function () {
                 buildingCustomShader.setUniform('u_isDark', false);
             }
         }
+
+        scene.requestRender();
     }
 
     // === 切换日夜模式 ===

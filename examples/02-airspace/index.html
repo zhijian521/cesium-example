@@ -4,107 +4,136 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Example02 · 机场空域展示</title>
-    
-    <!-- Cesium CSS -->
-    <link href="https://cesium.com/downloads/cesiumjs/releases/1.112/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-    
-    
+    <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.112/Build/Cesium/Widgets/widgets.css">
+    <link rel="stylesheet" href="../../shared/styles/flight-style.css">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <!-- 加载提示 -->
-    <div id="loading" class="loading">加载中...</div>
+    <div id="loading" class="loading">
+        <span class="loading-spinner"></span>
+        <span>LOADING...</span>
+    </div>
 
     <!-- 控制面板 -->
     <div class="control-panel">
-        <h3>B类空域控制</h3>
-        
+        <div class="panel-header">
+            <span class="panel-badge">🛫</span>
+            <h3>B类空域控制</h3>
+        </div>
+
         <!-- 虹桥机场 (双跑道) -->
-        <div class="airport-section">
+        <div class="panel-section">
             <div class="airport-header">
                 <span class="airport-name" style="color: #00d4ff;">虹桥机场 ZSSS (双跑道)</span>
-                <input type="checkbox" id="toggleHongqiao" checked>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="toggleHongqiao" checked>
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
             <div class="control-item">
-                <input type="checkbox" id="toggleHqLayer0" checked>
-                <label for="toggleHqLayer0" style="color: #64B5F6;">B类下层 0-600m (15km)</label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggleHqLayer0" checked>
+                    <span class="checkmark" style="border-color: #64B5F6;"></span>
+                    <span style="color: #64B5F6;">B类下层 0-600m (15km)</span>
+                </label>
             </div>
             <div class="control-item">
-                <input type="checkbox" id="toggleHqLayer1" checked>
-                <label for="toggleHqLayer1" style="color: #1976D2;">B类上层 600-3600m (30km)</label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggleHqLayer1" checked>
+                    <span class="checkmark" style="border-color: #1976D2;"></span>
+                    <span style="color: #1976D2;">B类上层 600-3600m (30km)</span>
+                </label>
             </div>
         </div>
-        
+
         <!-- 浦东机场 (五跑道) -->
-        <div class="airport-section">
+        <div class="panel-section">
             <div class="airport-header">
                 <span class="airport-name" style="color: #ff6464;">浦东机场 ZSPD (五跑道)</span>
-                <input type="checkbox" id="togglePudong" checked>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="togglePudong" checked>
+                    <span class="toggle-slider"></span>
+                </label>
             </div>
             <div class="control-item">
-                <input type="checkbox" id="togglePdLayer0" checked>
-                <label for="togglePdLayer0" style="color: #64B5F6;">B类下层 0-900m (20km)</label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="togglePdLayer0" checked>
+                    <span class="checkmark" style="border-color: #64B5F6;"></span>
+                    <span style="color: #64B5F6;">B类下层 0-900m (20km)</span>
+                </label>
             </div>
             <div class="control-item">
-                <input type="checkbox" id="togglePdLayer1" checked>
-                <label for="togglePdLayer1" style="color: #1976D2;">B类中层 900-1800m (40km)</label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="togglePdLayer1" checked>
+                    <span class="checkmark" style="border-color: #1976D2;"></span>
+                    <span style="color: #1976D2;">B类中层 900-1800m (40km)</span>
+                </label>
             </div>
             <div class="control-item">
-                <input type="checkbox" id="togglePdLayer2" checked>
-                <label for="togglePdLayer2" style="color: #0D47A1;">B类上层 1800-6000m (60km)</label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="togglePdLayer2" checked>
+                    <span class="checkmark" style="border-color: #0D47A1;"></span>
+                    <span style="color: #0D47A1;">B类上层 1800-6000m (60km)</span>
+                </label>
             </div>
         </div>
-        
-        <!-- 其他控制 -->
-        <div class="control-item">
-            <input type="checkbox" id="toggleBuildings" checked>
-            <label for="toggleBuildings">3D 建筑</label>
-        </div>
-        
-        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #333;">
-            <button id="btnOverview" class="btn-primary">总览视角</button>
-            <button id="btnSceneMode" class="btn-primary" style="margin-top: 8px;">Switch to Day</button>
+
+        <div class="panel-section">
+            <div class="control-item">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggleBuildings" checked>
+                    <span class="checkmark" style="border-color: #888;"></span>
+                    <span style="color: #ccc;">3D 建筑</span>
+                </label>
+            </div>
         </div>
     </div>
 
     <!-- 信息卡片 -->
     <div class="info-card">
-        <h4>B类空域划分标准</h4>
-        <p>依据《国家空域基础分类方法》：B类空域划设在民用运输机场上空。</p>
-        
-        <div class="legend-title">虹桥机场 (双跑道)</div>
-        <p style="font-size: 11px; color: #999; margin-bottom: 8px;">
-            二环阶梯结构：半径15km/30km<br>
-            高度：0-600m / 600-3600m
-        </p>
-        
-        <div class="legend-title">浦东机场 (三跑道以上)</div>
-        <p style="font-size: 11px; color: #999; margin-bottom: 8px;">
-            三环阶梯结构：半径20km/40km/60km<br>
-            高度：0-900m / 900-1800m / 1800-6000m
-        </p>
-        
-        <div class="legend-title">图例（蓝色系表示B类空域）</div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #64B5F6;"></div>
-            <span style="color: #ccc;">B类下层（浅蓝）</span>
+        <div class="panel-header">
+            <span class="panel-badge">📋</span>
+            <h3>B类空域划分标准</h3>
         </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #1976D2;"></div>
-            <span style="color: #ccc;">B类中层（中蓝）</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: #0D47A1;"></div>
-            <span style="color: #ccc;">B类上层（深蓝）</span>
+        <div class="panel-section">
+            <p>依据《国家空域基础分类方法》：B类空域划设在民用运输机场上空。</p>
+
+            <div class="legend-title">虹桥机场 (双跑道)</div>
+            <p class="legend-desc">二环阶梯结构：半径15km/30km · 高度0-600m / 600-3600m</p>
+
+            <div class="legend-title">浦东机场 (三跑道以上)</div>
+            <p class="legend-desc">三环阶梯结构：半径20km/40km/60km · 高度0-900m / 900-1800m / 1800-6000m</p>
+
+            <div class="legend-title">图例</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #64B5F6;"></div>
+                <span>B类下层</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #1976D2;"></div>
+                <span>B类中层</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #0D47A1;"></div>
+                <span>B类上层</span>
+            </div>
         </div>
     </div>
 
-    <!-- Cesium 容器 -->
+    <!-- 总览视角按钮 -->
+    <button id="btnOverview" class="overview-fab">🔭 总览视角</button>
+
+    <!-- 日夜切换按钮 -->
+    <button id="btnSceneMode" class="scene-mode-btn">
+        <span class="btn-icon">☀</span>
+        <span class="btn-label">切换白天</span>
+    </button>
+
     <div id="cesiumContainer"></div>
 
-    <!-- Cesium JS -->
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.112/Build/Cesium/Cesium.js"></script>
     <script src="../../shared/config/constants.js"></script>
+    <script src="../../shared/SceneManager.js"></script>
     <script src="./main.js"></script>
 </body>
 </html>

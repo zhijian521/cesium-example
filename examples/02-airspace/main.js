@@ -1,42 +1,23 @@
+/*== 02-airspace — 编排层（上海机场空域 3D 展示，使用 SceneManager） ==*/
+
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OTAzZDRkZi00ODkyLTQ5OTUtOGE1MC1jN2JmNjc0ODdiOGUiLCJpZCI6MzMxMzk2LCJpYXQiOjE3NTUwNDgwNTV9.GH-UECFbXsiJip__VTu2oXoBmx8dt61E52q3rBakZyI';
 
-/**
- * 上海机场空域 3D 可视化展示
- * 
- * 依据《国家空域基础分类方法》，展示虹桥(ZSSS)和浦东(ZSPD)机场的空域结构
- * 空域分类：A/B/C/D/G 五类，本示例展示 B/C/D 类
- */
-
-// ==================== 配置常量 ====================
-
-// Cesium Ion Token
-
-
-/**
- * 空域层级定义
- * 依据《国家空域基础分类方法》
- * 
- * B类空域划分规则：
- * - 三跑道（含）以上机场：半径20/40/60km三环，高度0-900/900-1800/1800-6000m
- * - 双跑道机场：半径15/30km二环，高度0-600/600-3600m
- * - 单跑道机场：半径12km单环，高度0-600m
- */
-
-// 浦东机场（5条跑道，三跑道以上）- 使用蓝色系表示B类空域
-const PUDONG_LAYERS = [
-    { bottomHeight: 0,    topHeight: 900,  radius: 20000, class: 'B', name: 'B类下层', color: '#64B5F6' },  // 浅蓝 20km
-    { bottomHeight: 900,  topHeight: 1800, radius: 40000, class: 'B', name: 'B类中层', color: '#1976D2' },  // 中蓝 40km
-    { bottomHeight: 1800, topHeight: 6000, radius: 60000, class: 'B', name: 'B类上层', color: '#0D47A1' }   // 深蓝 60km
+// === 空域层级定义 ===
+// 浦东机场（5条跑道，三跑道以上）
+var PUDONG_LAYERS = [
+    { bottomHeight: 0,    topHeight: 900,  radius: 20000, class: 'B', name: 'B类下层', color: '#64B5F6' },
+    { bottomHeight: 900,  topHeight: 1800, radius: 40000, class: 'B', name: 'B类中层', color: '#1976D2' },
+    { bottomHeight: 1800, topHeight: 6000, radius: 60000, class: 'B', name: 'B类上层', color: '#0D47A1' }
 ];
 
-// 虹桥机场（2条跑道，双跑道）- 使用蓝色系表示B类空域
-const HONGQIAO_LAYERS = [
-    { bottomHeight: 0,   topHeight: 600,  radius: 15000, class: 'B', name: 'B类下层', color: '#64B5F6' },  // 浅蓝 15km
-    { bottomHeight: 600, topHeight: 3600, radius: 30000, class: 'B', name: 'B类上层', color: '#1976D2' }   // 中蓝 30km
+// 虹桥机场（2条跑道，双跑道）
+var HONGQIAO_LAYERS = [
+    { bottomHeight: 0,   topHeight: 600,  radius: 15000, class: 'B', name: 'B类下层', color: '#64B5F6' },
+    { bottomHeight: 600, topHeight: 3600, radius: 30000, class: 'B', name: 'B类上层', color: '#1976D2' }
 ];
 
 // 机场配置
-const AIRPORTS = {
+var AIRPORTS = {
     hongqiao: {
         name: '上海虹桥国际机场',
         code: 'ZSSS',
@@ -62,174 +43,82 @@ const AIRPORTS = {
     }
 };
 
-// 虹桥跑道配置
-AIRPORTS.hongqiao.runways = [
-    { start: [121.328, 31.185, 3], end: [121.336, 31.212, 3] },
-    { start: [121.342, 31.182, 3], end: [121.350, 31.209, 3] }
-];
-
-// ==================== 全局状态 ====================
-
-const state = {
-    viewer: null,
+// === 全局状态 ===
+var viewer;
+var state = {
     entities: {
-        hongqiao: { base: [], layers: [[], []] },      // 虹桥：2层
-        pudong:   { base: [], layers: [[], [], []] },  // 浦东：3层
+        hongqiao: { base: [], layers: [[], []] },
+        pudong:   { base: [], layers: [[], [], []] },
         buildings: null
     }
 };
 
-let isNightMode = true;
-
-// ==================== 初始化 ====================
-
-async function init() {
+// === 启动 ===
+document.addEventListener('DOMContentLoaded', async function () {
     try {
-        initViewer();
-        initScene();
-        createAirspace();
-        await loadBuildings();
-        setupEventListeners();
-        flyToOverview();
-        hideLoading();
-    } catch (error) {
-        console.error('初始化失败:', error);
-        showError();
-    }
-}
+        // 1. 使用 SceneManager 初始化场景（地图 + 建筑 + 日夜模式）
+        viewer = await SceneManager.init('cesiumContainer', {
+            resolutionScale: 1.0
+        });
 
-function initViewer() {
-    state.viewer = new Cesium.Viewer('cesiumContainer', {
-        animation: false,
-        baseLayerPicker: false,
-        fullscreenButton: false,
-        vrButton: false,
-        geocoder: false,
-        homeButton: false,
-        infoBox: false,
-        sceneModePicker: false,
-        selectionIndicator: false,
-        timeline: false,
-        navigationHelpButton: false,
-        navigationInstructionsInitiallyVisible: false,
-        shouldAnimate: true,
-        terrain: Cesium.Terrain.fromWorldTerrain(),
-        msaaSamples: 2,
-        contextOptions: {
-            webgl: {
-                alpha: false,
-                antialias: true,
-                preserveDrawingBuffer: true,
-                powerPreference: 'high-performance'
+        // 2. 查找 OSM 建筑 tileset 引用（供显隐控制）
+        for (var i = 0; i < viewer.scene.primitives.length; i++) {
+            var p = viewer.scene.primitives.get(i);
+            if (p instanceof Cesium.Cesium3DTileset) {
+                state.entities.buildings = p;
+                break;
             }
         }
-    });
 
-    // 隐藏版权信息
-    state.viewer.cesiumWidget.creditContainer.style.display = 'none';
-}
+        // 3. 创建空域可视化
+        createAirspace();
 
-function initScene() {
-    const scene = state.viewer.scene;
-    
-    // 光照和渲染设置
-    scene.globe.enableLighting = true;
-    scene.globe.depthTestAgainstTerrain = true;
-    scene.highDynamicRange = true;
-    scene.globe.maximumScreenSpaceError = 4;
-    
-    // 主光源
-    scene.light = new Cesium.DirectionalLight({
-        direction: new Cesium.Cartesian3(0.5, -0.3, -0.8),
-        intensity: 2.0
-    });
-    
-    // 环境设置
-    scene.backgroundColor = new Cesium.Color(0.02, 0.05, 0.12, 1.0);
-    scene.fog.enabled = true;
-    scene.fog.density = 0.0002;
-    scene.fog.minimumBrightness = 0.1;
-    
-    // 分辨率设置
-    state.viewer.resolutionScale = 1.0;
+        // 4. 设置事件监听
+        setupEventListeners();
 
-    applySceneMode(isNightMode);
-}
+        // 5. 飞往总览视角（居中覆盖虹桥+浦东两个空域）
+        SceneManager.flyTo(
+            Cesium.Cartesian3.fromDegrees(121.57, 31.17, 95000),
+            { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(-65), roll: 0 },
+            2
+        );
 
-function applySceneMode(useNightMode) {
-    isNightMode = useNightMode;
-    const scene = state.viewer.scene;
+        // 6. 隐藏加载提示
+        setTimeout(function () {
+            var el = document.getElementById('loading');
+            if (el) el.style.display = 'none';
+        }, 1500);
 
-    if (isNightMode) {
-        scene.light = new Cesium.DirectionalLight({
-            direction: new Cesium.Cartesian3(0.5, -0.3, -0.8),
-            intensity: 0.35
-        });
-        scene.sun.show = false;
-        scene.moon.show = false;
-        scene.skyAtmosphere.show = false;
-        scene.globe.showGroundAtmosphere = false;
-        scene.globe.dynamicAtmosphereLighting = false;
-        scene.globe.dynamicAtmosphereLightingFromSun = false;
-    } else {
-        scene.light = new Cesium.DirectionalLight({
-            direction: new Cesium.Cartesian3(0.5, -0.3, -0.8),
-            intensity: 2.0
-        });
-        scene.sun.show = true;
-        scene.moon.show = false;
-        scene.skyAtmosphere.show = true;
-        scene.globe.showGroundAtmosphere = true;
-        scene.globe.dynamicAtmosphereLighting = true;
-        scene.globe.dynamicAtmosphereLightingFromSun = true;
+    } catch (error) {
+        console.error('初始化失败:', error);
+        var el = document.getElementById('loading');
+        if (el) el.innerText = '加载失败';
     }
+});
 
-    updateSceneModeButton();
-}
-
-function toggleSceneMode() {
-    applySceneMode(!isNightMode);
-}
-
-function updateSceneModeButton() {
-    const button = document.getElementById('btnSceneMode');
-    if (button) {
-        button.textContent = isNightMode ? 'Switch to Day' : 'Switch to Night';
-    }
-}
-
-// ==================== 空域创建 ====================
-
+// === 空域创建 ===
 function createAirspace() {
     createAirportAirspace('hongqiao', AIRPORTS.hongqiao);
     createAirportAirspace('pudong', AIRPORTS.pudong);
 }
 
 function createAirportAirspace(key, airport) {
-    const [lon, lat, alt] = airport.position;
-    const center = Cesium.Cartesian3.fromDegrees(lon, lat, alt);
-    const entities = state.entities[key];
-    
-    // 创建机场标记
+    var lon = airport.position[0];
+    var lat = airport.position[1];
+    var alt = airport.position[2];
+    var center = Cesium.Cartesian3.fromDegrees(lon, lat, alt);
+    var entities = state.entities[key];
+
     createAirportMarker(center, airport, entities.base);
-    
-    // 创建跑道
     createRunways(lon, lat, alt, airport, entities.base);
-    
-    // 创建空域层级
-    airport.layers.forEach((layerDef, index) => {
-        createAirspaceLayer(
-            lon, lat, alt, 
-            layerDef, 
-            layerDef.radius, 
-            index,
-            entities.layers[index]
-        );
+
+    airport.layers.forEach(function (layerDef, index) {
+        createAirspaceLayer(lon, lat, alt, layerDef, layerDef.radius, index, entities.layers[index]);
     });
 }
 
 function createAirportMarker(position, airport, entityArray) {
-    const marker = state.viewer.entities.add({
+    var marker = viewer.entities.add({
         name: airport.name,
         position: position,
         billboard: {
@@ -257,9 +146,9 @@ function createAirportMarker(position, airport, entityArray) {
 }
 
 function createRunways(centerLon, centerLat, alt, airport, entityArray) {
-    airport.runways.forEach((runway, index) => {
-        const runwayEntity = state.viewer.entities.add({
-            name: `${airport.name} - 跑道 ${index + 1}`,
+    airport.runways.forEach(function (runway, index) {
+        var runwayEntity = viewer.entities.add({
+            name: airport.name + ' - 跑道 ' + (index + 1),
             corridor: {
                 positions: Cesium.Cartesian3.fromDegreesArrayHeights([
                     runway.start[0], runway.start[1], runway.start[2],
@@ -278,13 +167,12 @@ function createRunways(centerLon, centerLat, alt, airport, entityArray) {
 }
 
 function createAirspaceLayer(lon, lat, alt, layerDef, radius, index, entityArray) {
-    const layerColor = Cesium.Color.fromCssColorString(layerDef.color);
-    const height = layerDef.topHeight - layerDef.bottomHeight;
-    const centerHeight = (layerDef.bottomHeight + layerDef.topHeight) / 2;
-    
-    // 3D 圆柱体 - B类空域
-    const cylinder = state.viewer.entities.add({
-        name: `${layerDef.class}类 ${layerDef.name}`,
+    var layerColor = Cesium.Color.fromCssColorString(layerDef.color);
+    var height = layerDef.topHeight - layerDef.bottomHeight;
+    var centerHeight = (layerDef.bottomHeight + layerDef.topHeight) / 2;
+
+    var cylinder = viewer.entities.add({
+        name: layerDef.class + '类 ' + layerDef.name,
         position: Cesium.Cartesian3.fromDegrees(lon, lat, alt + centerHeight),
         cylinder: {
             length: height,
@@ -298,17 +186,16 @@ function createAirspaceLayer(lon, lat, alt, layerDef, radius, index, entityArray
         }
     });
     entityArray.push(cylinder);
-    
-    // 高度标签
-    const labelAngle = (index * 72 + (index === 0 ? 0 : 36)) * Math.PI / 180;
-    const labelLon = lon + (radius / 111000) * Math.cos(labelAngle) / Math.cos(lat * Math.PI / 180);
-    const labelLat = lat + (radius / 111000) * Math.sin(labelAngle);
-    
-    const label = state.viewer.entities.add({
-        name: `${layerDef.name} 标签`,
+
+    var labelAngle = (index * 72 + (index === 0 ? 0 : 36)) * Math.PI / 180;
+    var labelLon = lon + (radius / 111000) * Math.cos(labelAngle) / Math.cos(lat * Math.PI / 180);
+    var labelLat = lat + (radius / 111000) * Math.sin(labelAngle);
+
+    var label = viewer.entities.add({
+        name: layerDef.name + ' 标签',
         position: Cesium.Cartesian3.fromDegrees(labelLon, labelLat, alt + layerDef.topHeight),
         label: {
-            text: `${layerDef.class}类 ${layerDef.name}\n${layerDef.bottomHeight}m-${layerDef.topHeight}m\n半径${radius/1000}km`,
+            text: layerDef.class + '类 ' + layerDef.name + '\n' + layerDef.bottomHeight + 'm-' + layerDef.topHeight + 'm\n半径' + (radius / 1000) + 'km',
             font: 'bold 10px Microsoft YaHei',
             fillColor: layerColor,
             outlineColor: Cesium.Color.BLACK,
@@ -324,116 +211,86 @@ function createAirspaceLayer(lon, lat, alt, layerDef, radius, index, entityArray
 }
 
 function createAirportPinSvg(code) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="14" fill="#00d4ff" stroke="#fff" stroke-width="2"/>
-        <text x="16" y="20" text-anchor="middle" fill="#000" font-size="10" font-weight="bold" font-family="Arial">${code}</text>
-    </svg>`;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">' +
+        '<circle cx="16" cy="16" r="14" fill="#00d4ff" stroke="#fff" stroke-width="2"/>' +
+        '<text x="16" y="20" text-anchor="middle" fill="#000" font-size="10" font-weight="bold" font-family="Arial">' + code + '</text>' +
+        '</svg>';
     return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
 }
 
-// ==================== 建筑加载 ====================
-
-async function loadBuildings() {
-    try {
-        state.entities.buildings = await Cesium.createOsmBuildingsAsync(state.viewer);
-        state.entities.buildings.maximumScreenSpaceError = 8;
-        state.viewer.scene.primitives.add(state.entities.buildings);
-    } catch (error) {
-        console.warn('建筑加载失败:', error);
-    }
-}
-
-// ==================== 视图控制 ====================
-
-function flyToOverview() {
-    state.viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(121.55, 31.15, 80000),
-        orientation: {
-            heading: Cesium.Math.toRadians(0),
-            pitch: Cesium.Math.toRadians(-60),
-            roll: 0
-        },
-        duration: 2
-    });
-}
-
-// ==================== 事件处理 ====================
-
+// === 事件处理 ===
 function setupEventListeners() {
-    const modeButton = document.getElementById('btnSceneMode');
+    var modeButton = document.getElementById('btnSceneMode');
     if (modeButton) {
-        modeButton.addEventListener('click', toggleSceneMode);
-        updateSceneModeButton();
+        modeButton.addEventListener('click', function () {
+            SceneManager.toggleSceneMode();
+            var isNight = SceneManager.getIsNightMode();
+            var icon = modeButton.querySelector('.btn-icon');
+            var label = modeButton.querySelector('.btn-label');
+            if (icon) icon.textContent = isNight ? '☀' : '🌙';
+            if (label) label.textContent = isNight ? '切换白天' : '切换黑夜';
+        });
     }
 
-    // 虹桥机场总开关
     setupMasterToggle('toggleHongqiao', 'hongqiao', 'toggleHqLayer');
-    
-    // 浦东机场总开关
     setupMasterToggle('togglePudong', 'pudong', 'togglePdLayer');
-    
-    // 各层级单独开关
-    // 虹桥：2层
-    for (let i = 0; i < 2; i++) {
-        setupLayerToggle(`toggleHqLayer${i}`, 'hongqiao', i);
+
+    for (var i = 0; i < 2; i++) {
+        setupLayerToggle('toggleHqLayer' + i, 'hongqiao', i);
     }
-    // 浦东：3层
-    for (let i = 0; i < 3; i++) {
-        setupLayerToggle(`togglePdLayer${i}`, 'pudong', i);
+    for (var j = 0; j < 3; j++) {
+        setupLayerToggle('togglePdLayer' + j, 'pudong', j);
     }
-    
-    // 建筑开关
-    document.getElementById('toggleBuildings').addEventListener('change', (e) => {
-        if (state.entities.buildings) {
-            state.entities.buildings.show = e.target.checked;
-        }
-    });
-    
-    // 总览按钮
-    document.getElementById('btnOverview').addEventListener('click', flyToOverview);
+
+    var buildingsToggle = document.getElementById('toggleBuildings');
+    if (buildingsToggle) {
+        buildingsToggle.addEventListener('change', function (e) {
+            if (state.entities.buildings) {
+                state.entities.buildings.show = e.target.checked;
+            }
+        });
+    }
+
+    var overviewBtn = document.getElementById('btnOverview');
+    if (overviewBtn) {
+        overviewBtn.addEventListener('click', function () {
+            SceneManager.flyTo(
+                Cesium.Cartesian3.fromDegrees(121.57, 31.17, 95000),
+                { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(-65), roll: 0 },
+                2
+            );
+        });
+    }
 }
 
 function setupMasterToggle(elementId, airportKey, childPrefix) {
-    document.getElementById(elementId).addEventListener('change', (e) => {
-        const show = e.target.checked;
-        const layerCount = airportKey === 'hongqiao' ? 2 : 3;
-        
-        // 控制基础实体（标记、跑道）
-        state.entities[airportKey].base.forEach(entity => entity.show = show);
-        
-        // 控制所有层级
-        state.entities[airportKey].layers.forEach(layer => {
-            layer.forEach(entity => entity.show = show);
+    var el = document.getElementById(elementId);
+    if (!el) return;
+
+    el.addEventListener('change', function (e) {
+        var show = e.target.checked;
+        var layerCount = airportKey === 'hongqiao' ? 2 : 3;
+
+        state.entities[airportKey].base.forEach(function (entity) { entity.show = show; });
+        state.entities[airportKey].layers.forEach(function (layer) {
+            layer.forEach(function (entity) { entity.show = show; });
         });
-        
-        // 同步子开关状态
-        for (let i = 0; i < layerCount; i++) {
-            document.getElementById(`${childPrefix}${i}`).checked = show;
+
+        for (var i = 0; i < layerCount; i++) {
+            var child = document.getElementById(childPrefix + i);
+            if (child) child.checked = show;
         }
     });
 }
 
 function setupLayerToggle(elementId, airportKey, layerIndex) {
-    document.getElementById(elementId).addEventListener('change', (e) => {
-        const layer = state.entities[airportKey].layers[layerIndex];
+    var el = document.getElementById(elementId);
+    if (!el) return;
+
+    el.addEventListener('change', function (e) {
+        var layer = state.entities[airportKey].layers[layerIndex];
         if (layer) {
-            layer.forEach(entity => entity.show = e.target.checked);
+            layer.forEach(function (entity) { entity.show = e.target.checked; });
         }
     });
 }
-
-// ==================== UI 辅助函数 ====================
-
-function hideLoading() {
-    setTimeout(() => {
-        document.getElementById('loading').style.display = 'none';
-    }, 1500);
-}
-
-function showError() {
-    document.getElementById('loading').innerText = '加载失败，请刷新重试';
-}
-
-// ==================== 启动 ====================
-
-document.addEventListener('DOMContentLoaded', init);
