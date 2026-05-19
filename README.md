@@ -7,9 +7,8 @@
 | 示例 | 描述 | 在线预览 |
 |------|------|----------|
 | [Example01](./examples/01-flight-basic/index.html) | 上海陆家嘴 3D 场景，飞机环线飞行演示 | [查看](./examples/01-flight-basic/index.html) |
-| [Example01-2](./examples/01-flight-extended/index.html) | Example01 的扩展示例 | [查看](./examples/01-flight-extended/index.html) |
-| [Example01-3](./examples/01-flight-rounded/index.html) | 东方明珠圆角四边形航线飞行，支持转弯倾斜姿态与近距跟随视角 | [查看](./examples/01-flight-rounded/index.html) |
-| [Example01-4](./examples/01-flight-vtol/index.html) | VTOL 模型替换版，保留飞行演示与跟随视角 | [查看](./examples/01-flight-vtol/index.html) |
+| [Example01-2](./examples/01-flight-rounded/index.html) | 东方明珠圆角四边形航线飞行，支持转弯倾斜姿态与近距跟随视角 | [查看](./examples/01-flight-rounded/index.html) |
+| [Example01-3](./examples/01-flight-vtol/index.html) | VTOL 模型替换版，保留飞行演示与跟随视角 | [查看](./examples/01-flight-vtol/index.html) |
 | [Example02](./examples/02-airspace/index.html) | 机场空域 3D 可视化（虹桥/浦东） | [查看](./examples/02-airspace/index.html) |
 | [Example03](./examples/03-particles/index.html) | 飞机粒子特效（火焰/烟雾/气流） | [查看](./examples/03-particles/index.html) |
 | [Example04](./examples/04-weather/index.html) | 雷雨云天气飞行演示（云层/细雨/闪电 + 预设切换） | [查看](./examples/04-weather/index.html) |
@@ -22,9 +21,6 @@
 - 飞机飞行动画与航线绘制
 - 双击锁定相机跟随
 - 滚轮缩放相机距离
-
-### 01-flight-extended：扩展示例
-- 基于基础飞行的扩展功能演示
 
 ### 01-flight-rounded：圆角四边形航线飞行
 - 东方明珠圆角四边形环线飞行
@@ -76,7 +72,6 @@ http://localhost:8080
 ├── README.md
 ├── examples/
 │   ├── 01-flight-basic/
-│   ├── 01-flight-extended/
 │   ├── 01-flight-rounded/
 │   ├── 01-flight-vtol/
 │   ├── 02-airspace/

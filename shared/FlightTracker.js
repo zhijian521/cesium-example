@@ -39,7 +39,10 @@ const FlightTracker = (function () {
         panelOffsetYMax: 200,
         panelDistanceMin: 300,
         panelDistanceMax: 8000,
-        zoomSpeed: 30
+        zoomSpeed: 30,
+        cameraMode: 'latlon',
+        cameraTargetUpOffset: 16,
+        getHeading: null
     };
     let config = DEFAULTS;
 
@@ -186,44 +189,57 @@ const FlightTracker = (function () {
         return Math.round(Cesium.Math.clamp(normalizedSpeed, minSpeed, maxSpeed));
     }
 
-    // === 相机跟随 ===
+    // === 相机跟随（latlon 近似 / ENU 精确，两种模式） ===
     function updateCameraFollow(position, currentTime) {
-        const cartographic = Cesium.Cartographic.fromCartesian(position);
+        var heading;
 
-        // 计算航向
-        const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.1, new Cesium.JulianDate());
-        const nextPosition = airplaneEntity.position.getValue(nextTime);
-
-        let heading = 0;
-        if (nextPosition) {
-            const currentCarto = Cesium.Cartographic.fromCartesian(position);
-            const nextCarto = Cesium.Cartographic.fromCartesian(nextPosition);
-            heading = Math.atan2(
-                nextCarto.longitude - currentCarto.longitude,
-                nextCarto.latitude - currentCarto.latitude
-            );
+        // 外部航向提供者优先（如 banking 倾斜姿态）
+        if (typeof config.getHeading === 'function') {
+            heading = config.getHeading(airplaneEntity, currentTime);
+        } else {
+            var nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.1, new Cesium.JulianDate());
+            var nextPos = airplaneEntity.position.getValue(nextTime);
+            if (nextPos) {
+                var curCarto = Cesium.Cartographic.fromCartesian(position);
+                var nextCarto = Cesium.Cartographic.fromCartesian(nextPos);
+                heading = Math.atan2(nextCarto.longitude - curCarto.longitude, nextCarto.latitude - curCarto.latitude);
+            } else {
+                heading = 0;
+            }
         }
 
-        // 相机位置：飞机后上方
-        const sideAngle = Cesium.Math.toRadians(-10);
-        const backHeading = heading - sideAngle;
-        const backLon = Cesium.Math.toDegrees(cartographic.longitude) - Math.sin(backHeading) * (cameraDistance / 111000);
-        const backLat = Cesium.Math.toDegrees(cartographic.latitude) - Math.cos(backHeading) * (cameraDistance / 111000);
-        const camHeight = cartographic.height + cameraHeightOffset;
+        if (config.cameraMode === 'enu') {
+            // === ENU 局部坐标系（精确，适合贴很近的跟随） ===
+            var enuFrame = Cesium.Transforms.eastNorthUpToFixedFrame(position);
+            var localOffset = new Cesium.Cartesian3(
+                -Math.sin(heading) * cameraDistance,
+                -Math.cos(heading) * cameraDistance,
+                cameraHeightOffset
+            );
+            var worldOffset = Cesium.Matrix4.multiplyByPointAsVector(enuFrame, localOffset, new Cesium.Cartesian3());
+            var camPos = Cesium.Cartesian3.add(position, worldOffset, new Cesium.Cartesian3());
+        } else {
+            // === 经纬度近似（简单快速，适合远距离跟随） ===
+            var cartographic = Cesium.Cartographic.fromCartesian(position);
+            var sideAngle = Cesium.Math.toRadians(-10);
+            var backHeading = heading - sideAngle;
+            var backLon = Cesium.Math.toDegrees(cartographic.longitude) - Math.sin(backHeading) * (cameraDistance / 111000);
+            var backLat = Cesium.Math.toDegrees(cartographic.latitude) - Math.cos(backHeading) * (cameraDistance / 111000);
+            var camHeight = cartographic.height + cameraHeightOffset;
+            var camPos = Cesium.Cartesian3.fromDegrees(backLon, backLat, camHeight);
+        }
 
-        const cameraPosition = Cesium.Cartesian3.fromDegrees(backLon, backLat, camHeight);
-
-        const targetUp = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(position, new Cesium.Cartesian3());
-        const targetOffset = Cesium.Cartesian3.multiplyByScalar(targetUp, 16, new Cesium.Cartesian3());
-        const lookTarget = Cesium.Cartesian3.add(position, targetOffset, new Cesium.Cartesian3());
-        const direction = Cesium.Cartesian3.normalize(
-            Cesium.Cartesian3.subtract(lookTarget, cameraPosition, new Cesium.Cartesian3()),
+        var targetUp = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(position, new Cesium.Cartesian3());
+        var targetOffset = Cesium.Cartesian3.multiplyByScalar(targetUp, config.cameraTargetUpOffset, new Cesium.Cartesian3());
+        var lookTarget = Cesium.Cartesian3.add(position, targetOffset, new Cesium.Cartesian3());
+        var direction = Cesium.Cartesian3.normalize(
+            Cesium.Cartesian3.subtract(lookTarget, camPos, new Cesium.Cartesian3()),
             new Cesium.Cartesian3()
         );
-        const up = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(cameraPosition, new Cesium.Cartesian3());
+        var up = Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(camPos, new Cesium.Cartesian3());
 
         viewer.camera.setView({
-            destination: cameraPosition,
+            destination: camPos,
             orientation: { direction: direction, up: up }
         });
     }
