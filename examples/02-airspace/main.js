@@ -61,6 +61,10 @@ document.addEventListener('DOMContentLoaded', async function () {
             resolutionScale: 1.0
         });
 
+        // 1.5 固定时钟为正午（确保白天模式时太阳可见）
+        viewer.clock.currentTime = Cesium.JulianDate.fromIso8601('2024-06-21T12:00:00Z');
+        viewer.clock.shouldAnimate = false;
+
         // 2. 查找 OSM 建筑 tileset 引用（供显隐控制）
         for (var i = 0; i < viewer.scene.primitives.length; i++) {
             var p = viewer.scene.primitives.get(i);

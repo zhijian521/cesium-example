@@ -121,7 +121,6 @@ const SceneManager = (function () {
 
         scene.globe.enableLighting = true;
         scene.globe.depthTestAgainstTerrain = true;
-        scene.highDynamicRange = true;
 
         scene.light = new Cesium.DirectionalLight({
             direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
@@ -140,9 +139,9 @@ const SceneManager = (function () {
         scene.shadowMap.darkness = 0.4;
 
         scene.globe.dynamicAtmosphereLighting = true;
-        scene.globe.dynamicAtmosphereLightingFromSun = true;
+        scene.globe.dynamicAtmosphereLightingFromSun = false;
+        scene.globe.atmosphereLightIntensity = 20.0;
 
-        scene.hdr = true;
         scene.globe.maximumScreenSpaceError = 4;
         scene.postProcessStages.fxaa.enabled = true;
         scene.globe.tileCacheSize = opts.buildingTileCacheSize;
@@ -205,35 +204,38 @@ const SceneManager = (function () {
     function applySceneMode(useNightMode) {
         isNightMode = useNightMode;
         const scene = viewer.scene;
+        const globe = scene.globe;
 
         if (isNightMode) {
-            scene.backgroundColor = new Cesium.Color(0.05, 0.08, 0.15, 1.0);
             scene.light = new Cesium.DirectionalLight({
                 direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
                 intensity: 0.50
             });
             scene.sun.show = false;
             scene.moon.show = false;
-            scene.skyAtmosphere.show = false;
-            scene.globe.showGroundAtmosphere = false;
-            scene.globe.dynamicAtmosphereLighting = false;
-            scene.globe.dynamicAtmosphereLightingFromSun = false;
+            // 夜间彻底隐藏天空大气层，露出星空
+            if (scene.skyAtmosphere) scene.skyAtmosphere.show = false;
+            globe.showGroundAtmosphere = false;
+            globe.dynamicAtmosphereLighting = false;
+            globe.dynamicAtmosphereLightingFromSun = false;
 
             if (buildingCustomShader) {
                 buildingCustomShader.setUniform('u_isDark', true);
             }
         } else {
-            scene.backgroundColor = new Cesium.Color(0.35, 0.55, 0.85, 1.0);
+            // 先设灯光再恢复大气（顺序影响初始化）
             scene.light = new Cesium.DirectionalLight({
                 direction: new Cesium.Cartesian3(0.6, -0.4, -0.7),
                 intensity: 2.5
             });
             scene.sun.show = true;
             scene.moon.show = false;
-            scene.skyAtmosphere.show = true;
-            scene.globe.showGroundAtmosphere = true;
-            scene.globe.dynamicAtmosphereLighting = true;
-            scene.globe.dynamicAtmosphereLightingFromSun = true;
+            // 参照 Cesium 官方 Atmosphere Sandcastle 参数
+            globe.atmosphereLightIntensity = 20.0;
+            globe.dynamicAtmosphereLighting = true;
+            globe.dynamicAtmosphereLightingFromSun = false;
+            globe.showGroundAtmosphere = true;
+            if (scene.skyAtmosphere) scene.skyAtmosphere.show = true;
 
             if (buildingCustomShader) {
                 buildingCustomShader.setUniform('u_isDark', false);
