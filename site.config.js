@@ -6,7 +6,7 @@ const SITE_CONFIG = {
   lang: 'zh-CN',
   author: '耶温',
   keywords: ['Cesium', 'CesiumJS', '3D地球', '飞行航线', '空域可视化', '粒子特效', '天气模拟'],
-  ogImage: '/cesium/assets/images/og-cover.png',
+  ogImage: './assets/images/og-cover.png',
   examples: [
     {
       id: '01-flight-basic',
@@ -15,7 +15,7 @@ const SITE_CONFIG = {
       categoryOrder: 1,
       description: '围绕东方明珠的圆形闭合航线飞行动画，展示基础航线绘制与飞机实体创建',
       tags: ['CircularFlightPath', 'TailEffect', 'FlightTracker'],
-      path: '/cesium/examples/01-flight-basic/'
+      path: './examples/01-flight-basic/'
     },
     {
       id: '01-flight-rounded',
@@ -24,7 +24,7 @@ const SITE_CONFIG = {
       categoryOrder: 1,
       description: '圆角矩形航线配合转弯倾斜姿态，ENU 近距相机跟随',
       tags: ['RoundedFlightPath', 'FlightTracker', 'Banking'],
-      path: '/cesium/examples/01-flight-rounded/'
+      path: './examples/01-flight-rounded/'
     },
     {
       id: '01-flight-vtol',
@@ -33,7 +33,7 @@ const SITE_CONFIG = {
       categoryOrder: 1,
       description: '使用 Beta Alia VTOL 倾转旋翼机模型替换默认飞机',
       tags: ['RoundedFlightPath', 'VTOL', 'GLB'],
-      path: '/cesium/examples/01-flight-vtol/'
+      path: './examples/01-flight-vtol/'
     },
     {
       id: '02-airspace',
@@ -42,7 +42,7 @@ const SITE_CONFIG = {
       categoryOrder: 2,
       description: '虹桥与浦东机场 B 类空域分层 3D 可视化，含控制面板',
       tags: ['Airspace', 'SceneManager', '3D Volume'],
-      path: '/cesium/examples/02-airspace/'
+      path: './examples/02-airspace/'
     },
     {
       id: '03-particles',
@@ -51,7 +51,7 @@ const SITE_CONFIG = {
       categoryOrder: 3,
       description: '火焰、烟雾、气流粒子特效演示，含强度调节控制',
       tags: ['ParticleSystem', 'SceneManager'],
-      path: '/cesium/examples/03-particles/'
+      path: './examples/03-particles/'
     },
     {
       id: '04-weather',
@@ -60,7 +60,7 @@ const SITE_CONFIG = {
       categoryOrder: 4,
       description: '雷雨云团、细雨、闪电天气效果，含预设切换',
       tags: ['Weather', 'SceneManager', 'Cloud'],
-      path: '/cesium/examples/04-weather/'
+      path: './examples/04-weather/'
     },
     {
       id: '04-weather-cloud',
@@ -69,7 +69,7 @@ const SITE_CONFIG = {
       categoryOrder: 4,
       description: 'rain_1.glb 云模型独立加载与展示',
       tags: ['Cloud', 'GLB', 'SceneManager'],
-      path: '/cesium/examples/04-weather-cloud/'
+      path: './examples/04-weather-cloud/'
     }
   ]
 };

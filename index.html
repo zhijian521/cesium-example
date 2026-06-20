@@ -9,7 +9,7 @@
     <meta name="keywords" content="Cesium, CesiumJS, 3D地球, 飞行航线, 空域可视化, 粒子特效, 天气模拟">
     <meta name="author" content="耶温">
     <link rel="canonical" href="https://yuwb.cn/cesium/">
-    <link rel="icon" type="image/png" href="./assets/images/logo.png">
+    <!-- <link rel="icon" type="image/png" href="./assets/images/logo.png"> -->
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -308,6 +308,7 @@
             font-size: 1.375rem;
             line-height: 1.5;
             color: var(--foreground);
+            margin-top: 0;
             margin-bottom: 0.5rem;
         }
 
@@ -462,12 +463,13 @@
                     var card = document.createElement('a');
                     card.href = item.path;
                     card.className = 'card';
+                    card.setAttribute('aria-label', item.title + ' - ' + item.description);
 
                     var kicker = document.createElement('div');
                     kicker.className = 'card-kicker';
                     kicker.textContent = cat.name;
 
-                    var cardTitle = document.createElement('div');
+                    var cardTitle = document.createElement('h3');
                     cardTitle.className = 'card-title';
                     cardTitle.textContent = item.title;
 
