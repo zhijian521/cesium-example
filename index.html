@@ -43,7 +43,7 @@
     {
       "@context": "https://schema.org",
       "@type": "ItemList",
-      "name": "Cesium 三维地球示例",
+      "name": "Cesium 三维地球示例集",
       "numberOfItems": 7,
       "itemListElement": [
         {
@@ -94,7 +94,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap" rel="stylesheet">
 
     <style>
         /* === Design Tokens (对齐知简) === */
@@ -102,24 +102,17 @@
             --primary: #9f000f;
             --primary-hover: #c41e3a;
             --primary-foreground: #ffffff;
-            --primary-subtle: rgba(159, 0, 15, 0.08);
-            --primary-subtle-soft: rgba(159, 0, 15, 0.04);
+            --primary-subtle: rgba(159, 0, 15, 0.4);
             --foreground: #1d1b20;
             --muted-foreground: #6f655c;
             --background: #fbf9f9;
-            --highlight: #faf7f4;
             --muted: #f6efe7;
-            --secondary: #f3ece4;
             --border: #e7ddd1;
-            --input: #d9cbbc;
             --accent: #e6efe5;
-            --accent-foreground: #31483f;
-            --accent-warm: #f5e6e6;
             --selection: rgba(182, 72, 43, 0.18);
             --radius: 0;
             --font-serif: 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, serif;
             --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
-            --font-mono: 'SF Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace;
         }
 
         /* === Reset === */
@@ -193,6 +186,11 @@
             background: var(--muted);
         }
 
+        .nav-link:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
         /* === Hero 区域 === */
         .hero {
             max-width: 80rem;
@@ -246,6 +244,11 @@
             transform: scale(0.98);
         }
 
+        .hero-cta:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
         /* === 示例区域 === */
         .examples {
             max-width: 80rem;
@@ -291,8 +294,13 @@
         }
 
         .card:hover {
-            border-color: rgba(159, 0, 15, 0.4);
+            border-color: var(--primary-subtle);
             transform: translateY(-2px);
+        }
+
+        .card:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
         .card-kicker {
@@ -395,15 +403,16 @@
 
 <body>
     <!-- 导航栏 -->
-    <nav class="nav">
+    <nav class="nav" aria-label="主导航">
         <div class="nav-inner">
-            <a href="./" class="nav-brand">Cesium 示例集</a>
+            <a href="./" class="nav-brand" title="Cesium 三维地球示例集">Cesium 示例集</a>
             <a href="https://github.com/zhijian521/cesium-example" target="_blank" rel="noopener noreferrer" class="nav-link">GitHub</a>
         </div>
     </nav>
 
     <!-- Hero 区域 -->
-    <section class="hero">
+    <main>
+    <section class="hero" aria-label="功能介绍">
         <div class="hero-kicker">CesiumJS 1.112</div>
         <h1 class="hero-title">Cesium 三维地球示例集</h1>
         <p class="hero-desc">
@@ -413,9 +422,11 @@
     </section>
 
     <!-- 示例卡片区域 -->
-    <section id="examples" class="examples">
+    <section id="examples" class="examples" aria-label="示例列表">
         <!-- 由 JS 动态渲染 -->
     </section>
+
+    </main>
 
     <!-- 页脚 -->
     <footer class="footer">
