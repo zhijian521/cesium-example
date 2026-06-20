@@ -6,7 +6,7 @@ const SITE_CONFIG = {
   lang: 'zh-CN',
   author: '耶温',
   keywords: ['Cesium', 'CesiumJS', '3D地球', '飞行航线', '空域可视化', '粒子特效', '天气模拟'],
-  ogImage: './assets/images/og-cover.png',
+  ogImage: './assets/home.png',
   examples: [
     {
       id: '01-flight-basic',
