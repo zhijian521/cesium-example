@@ -1,65 +1,93 @@
-# Cesium 学习示例集
+<div align="center">
 
-基于 [CesiumJS](https://cesium.com/platform/cesiumjs/) 的 3D 地球与地图可视化示例项目。
+<img src="./assets/home.png" alt="Cesium 三维地球示例集" width="100%">
 
-## 示例列表
+# 🌍 Cesium 三维地球示例集
 
-| 示例 | 描述 | 在线预览 |
-|------|------|----------|
-| [Example01](./examples/01-flight-basic/index.html) | 上海陆家嘴 3D 场景，飞机圆形环线飞行演示 | [查看](./examples/01-flight-basic/index.html) |
-| [Example01-2](./examples/01-flight-rounded/index.html) | 东方明珠圆角四边形航线飞行，支持转弯倾斜姿态与 ENU 近距跟随 | [查看](./examples/01-flight-rounded/index.html) |
-| [Example01-3](./examples/01-flight-vtol/index.html) | VTOL 模型替换版，复用共享航线与场景模块 | [查看](./examples/01-flight-vtol/index.html) |
-| [Example02](./examples/02-airspace/index.html) | 机场空域 3D 可视化（虹桥/浦东），玻璃拟态控制面板 | [查看](./examples/02-airspace/index.html) |
-| [Example03](./examples/03-particles/index.html) | 飞机粒子特效（火焰/烟雾/气流），支持强度调节 | [查看](./examples/03-particles/index.html) |
-| [Example04](./examples/04-weather/index.html) | 雷雨云天气飞行演示（云层/细雨/闪电 + 预设切换） | [查看](./examples/04-weather/index.html) |
-| [Example04-2](./examples/04-weather-cloud/index.html) | rain-1 云模型独立加载与视角控制 | [查看](./examples/04-weather-cloud/index.html) |
+基于 CesiumJS 的 3D 地球可视化示例集，以上海陆家嘴为主要场景，<br>展示飞行航线、空域可视化、粒子特效和天气模拟
 
-## 示例说明
+[![CesiumJS](https://img.shields.io/badge/CesiumJS-1.112-blue?logo=cesiumjs)](https://cesium.com/platform/cesiumjs/)
+[![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
+[![Online](https://img.shields.io/badge/在线预览-yuwb.cn-orange)](https://yuwb.cn/cesium/)
 
-### 01-flight-basic：飞机飞行演示
-- 3D 建筑自定义着色器（扫描线效果）
-- 飞机飞行动画与航线绘制
-- 双击锁定相机跟随 · 滚轮缩放
-- 使用共享模块：SceneManager、CircularFlightPath、FlightTracker、TailEffect
+[在线预览](https://yuwb.cn/cesium/) · [快速开始](#-快速开始) · [示例说明](#-示例说明)
 
-### 01-flight-rounded：圆角四边形航线飞行
-- 圆角四边形环线飞行 + 转弯倾斜姿态（banking）
-- ENU 局部坐标系精确相机跟随（120m 近距）
-- 使用共享模块：SceneManager、RoundedFlightPath、FlightTracker
+</div>
 
-### 01-flight-vtol：VTOL 模型替换
-- 使用 `beta_alia_vtol_aircraft.glb` 模型
-- 螺旋桨加速动画
-- 复用 SceneManager + RoundedFlightPath 共享模块
+---
 
-### 02-airspace：机场空域展示
-- 虹桥（双跑道）与浦东（五跑道）B 类空域 3D 可视化
-- 按《国家空域基础分类方法》分层展示
-- 多层空域结构与显隐控制
-- 玻璃拟态控制面板 + 底部居中总览按钮
-- 使用共享模块：SceneManager
+## ✨ 功能特性
 
-### 03-particles：飞机粒子特效
-- 双飞机航线上的粒子效果展示
-- 支持火焰/烟雾/气流三种效果切换 + 强度调节
-- 粒子物理模拟（浮力、湍流、抬升）
-- 使用共享模块：SceneManager
+- 🛫 **飞行动画** — 圆形 / 圆角四边形航线，转弯倾斜姿态，ENU 近距相机跟随
+- 🏙️ **3D 建筑** — OSM 建筑自定义着色器，扫描线效果，日夜切换
+- ✈️ **空域可视化** — 虹桥 / 浦东 B 类空域分层 3D 展示，玻璃拟态控制面板
+- 🔥 **粒子特效** — 火焰 / 烟雾 / 气流三种效果切换与强度调节
+- ⛈️ **天气模拟** — 雷雨云团 / 细雨 / 闪电，多预设切换
+- 📦 **模块化架构** — 共享模块 + 编排层，示例间代码复用
 
-### 04-weather：雷雨云天气飞行演示
-- 在航线周边叠加雷雨天气（云团、细雨、闪电）
-- 云层支持不规则云团与厚度增强
-- 鼠标点击可穿透云层，优先选中飞机对象
-- 支持天气预设切换：`drizzle`、`rainstorm`、`darkStorm`
-- 使用共享模块：SceneManager
+## 🚀 快速开始
 
-### 04-weather-cloud：rain-1 云模型加载
-- 基于 Cesium 加载 `rain_1.glb` 云模型
-- 底部居中玻璃拟态重置视角按钮
-- 使用共享模块：SceneManager
+```bash
+# 克隆项目
+git clone https://github.com/zhijian521/cesium-example.git
+cd cesium-example
 
-## 架构
+# 启动本地服务（任选一种）
+python3 -m http.server 8080
+# 或
+npx serve .
 
-项目采用**共享模块 + 编排层**模式，所有示例的 `main.js` 仅保留业务逻辑：
+# 浏览器访问
+open http://localhost:8080
+```
+
+> **注意：** 项目为纯静态 HTML，无需安装依赖或构建步骤，本地 HTTP 服务即可运行。
+
+## 📸 示例说明
+
+<table>
+<tr>
+<td width="50%">
+
+### ✈️ 飞行航线
+
+**01-flight-basic** — 基础圆形航线
+围绕东方明珠的圆形闭合航线飞行动画，展示航线绘制、飞机实体创建与尾部预警特效
+
+**01-flight-rounded** — 圆角四边形航线
+圆角矩形航线配合转弯倾斜姿态 (banking)，ENU 局部坐标系精确相机跟随
+
+**01-flight-vtol** — VTOL 倾转旋翼机
+使用 Beta Alia VTOL 倾转旋翼机模型替换默认飞机，含螺旋桨加速动画
+
+</td>
+<td width="50%">
+
+### 🏙️ 空域可视化
+
+**02-airspace** — B 类空域可视化
+虹桥（双跑道）与浦东（五跑道）机场 B 类空域分层 3D 可视化，依据《国家空域基础分类方法》，含玻璃拟态控制面板
+
+### 🔥 粒子特效
+
+**03-particles** — 飞机粒子特效
+双飞机航线上的粒子效果展示，支持火焰 / 烟雾 / 气流三种效果切换与强度调节
+
+### ⛈️ 天气模拟
+
+**04-weather** — 雷雨云天气
+航线周边叠加雷雨天气（云团、细雨、闪电），支持 drizzle / rainstorm / darkStorm 预设切换
+
+**04-weather-cloud** — 云模型加载
+加载 rain_1.glb 云模型，独立展示与视角控制
+
+</td>
+</tr>
+</table>
+
+## 🏗️ 架构
+
+项目采用 **共享模块 + 编排层** 模式，每个示例的 `main.js` 仅保留业务编排逻辑，通用功能抽取到 `shared/` 模块：
 
 ```
 shared/
@@ -76,26 +104,22 @@ shared/
 └── TailEffect.js                 ← 尾部预警波纹特效
 ```
 
-## 快速开始
+## 📁 项目结构
 
-```bash
-# 克隆项目
-git clone <repository-url>
-cd cesium-example
-
-# 启动本地服务
-python -m http.server 8080
-
-# 浏览器访问
-http://localhost:8080
 ```
-
-## 目录结构
-
-```text
 .
-├── index.html
-├── README.md
+├── index.html                    ← 主页（知简设计系统）
+├── site.config.js                ← 站点配置（名称、URL、示例列表）
+├── sitemap.xml                   ← SEO Sitemap
+├── robots.txt                    ← SEO Robots
+├── assets/
+│   ├── icon.png                  ← 项目图标
+│   ├── home.png                  ← 封面图
+│   ├── images/
+│   └── models/
+│       ├── shidi/                ← 飞机模型
+│       ├── beta-alia/            ← VTOL 模型
+│       └── weather/              ← 云模型
 ├── examples/
 │   ├── 01-flight-basic/
 │   ├── 01-flight-rounded/
@@ -104,19 +128,9 @@ http://localhost:8080
 │   ├── 03-particles/
 │   ├── 04-weather/
 │   └── 04-weather-cloud/
-├── assets/
-│   ├── images/
-│   └── models/
-│       ├── shidi/
-│       ├── beta-alia/
-│       └── weather/
 └── shared/
     ├── styles/
-    │   └── flight-style.css
     ├── config/
-    │   ├── cesium-config.js
-    │   ├── cesium-bootstrap.js
-    │   └── constants.js
     ├── SceneManager.js
     ├── CircularFlightPath.js
     ├── RoundedFlightPath.js
@@ -124,6 +138,14 @@ http://localhost:8080
     └── TailEffect.js
 ```
 
-## 许可证
+## 🛠️ 技术栈
 
-MIT License
+| 技术 | 说明 |
+|------|------|
+| [CesiumJS 1.112](https://cesium.com/platform/cesiumjs/) | 3D 地球与地图可视化引擎 |
+| [Noto Serif SC](https://fonts.google.com/noto/specimen/Noto+Serif+SC) | 衬线中文字体（标题） |
+| 原生 HTML / CSS / JS | 无框架、无构建工具、纯静态 |
+
+## 📄 许可证
+
+[MIT License](./LICENSE)
