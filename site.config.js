@@ -1,12 +1,12 @@
 const SITE_CONFIG = {
   name: 'Cesium 三维地球示例集',
   description: '基于 CesiumJS 的 3D 地球可视化示例集，展示飞行航线、空域可视化、粒子特效和天气模拟',
-  url: 'https://yuwb.cn/cesium/',
+  url: 'https://yuwb.dev/cesium/',
   baseUrl: '/cesium/',
   lang: 'zh-CN',
   author: '耶温',
   keywords: ['Cesium', 'CesiumJS', '3D地球', '飞行航线', '空域可视化', '粒子特效', '天气模拟'],
-  ogImage: 'https://yuwb.cn/cesium/assets/home.png',
+  ogImage: 'https://yuwb.dev/cesium/assets/home.png',
   examples: [
     {
       id: '01-flight-basic',

@@ -8,9 +8,9 @@
 
 [![CesiumJS](https://img.shields.io/badge/CesiumJS-1.112-blue?logo=cesiumjs)](https://cesium.com/platform/cesiumjs/)
 [![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
-[![Online](https://img.shields.io/badge/在线预览-yuwb.cn-orange)](https://yuwb.cn/cesium/)
+[![Online](https://img.shields.io/badge/在线预览-yuwb.dev-orange)](https://yuwb.dev/cesium/)
 
-[在线预览](https://yuwb.cn/cesium/) · [快速开始](#-快速开始) · [示例说明](#-示例说明)
+[在线预览](https://yuwb.dev/cesium/) · [快速开始](#-快速开始) · [示例说明](#-示例说明)
 
 </div>
 
