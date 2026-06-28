@@ -9,7 +9,7 @@ const CircularFlightPath = (function () {
         numPoints: 100,
         duration: 60,
         clockMultiplier: 0.3,
-        modelUri: '../../assets/models/shidi/shidi_Animi.gltf',
+        modelUri: '../../assets/models/aircraft/aircraft_Animi.gltf',
         modelScale: 5,
         modelMinPixelSize: 80,
         modelMaxScale: 100,

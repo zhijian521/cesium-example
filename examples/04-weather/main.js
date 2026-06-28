@@ -144,7 +144,7 @@ function createAirplaneAndPath() {
             start: startTime, stop: stopTime
         })]),
         model: {
-            uri: '../../assets/models/shidi/shidi_Animi.gltf',
+            uri: '../../assets/models/aircraft/aircraft_Animi.gltf',
             scale: 5,
             minimumPixelSize: 80,
             maximumScale: 100
@@ -204,7 +204,7 @@ function createAirplaneAndPath() {
             start: startTime, stop: stopTime
         })]),
         model: {
-            uri: '../../assets/models/shidi/shidi_Animi.gltf',
+            uri: '../../assets/models/aircraft/aircraft_Animi.gltf',
             scale: 5,
             minimumPixelSize: 80,
             maximumScale: 100

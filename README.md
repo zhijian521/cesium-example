@@ -117,7 +117,7 @@ shared/
 │   ├── home.png                  ← 封面图
 │   ├── images/
 │   └── models/
-│       ├── shidi/                ← 飞机模型
+│       ├── aircraft/               ← 飞机模型
 │       ├── beta-alia/            ← VTOL 模型
 │       └── weather/              ← 云模型
 ├── examples/

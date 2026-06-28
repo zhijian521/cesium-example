@@ -27,7 +27,7 @@ var trailAlignScratch = new Cesium.Cartesian3();
 var turbulenceScratch = new Cesium.Cartesian3();
 var turbulenceScratch2 = new Cesium.Cartesian3();
 
-var AIRPLANE_MODEL_URL = '../../assets/models/shidi/shidi_Animi.gltf';
+var AIRPLANE_MODEL_URL = '../../assets/models/aircraft/aircraft_Animi.gltf';
 
 var LOCATIONS = {
     dongfangmingzhu: { lon: 121.4998, lat: 31.2397, height: 600 },
