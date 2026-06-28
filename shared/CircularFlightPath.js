@@ -9,7 +9,7 @@ const CircularFlightPath = (function () {
         numPoints: 100,
         duration: 60,
         clockMultiplier: 0.3,
-        modelUri: '../../assets/models/aircraft/aircraft_Animi.gltf',
+        modelUri: '../../assets/models/beta-alia/beta_alia_vtol_aircraft.glb',
         modelScale: 5,
         modelMinPixelSize: 80,
         modelMaxScale: 100,

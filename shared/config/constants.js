@@ -6,18 +6,6 @@ const dongfangmingzhu = {
     height: 600
 };
 
-const dishuihu = {
-    lon: 121.935,
-    lat: 30.900,
-    height: 600
-};
-
-const chongmingdao = {
-    lon: 121.75,
-    lat: 31.52,
-    height: 600
-};
-
 const AIRPLANE_ALERT_CONFIG = {
     abnormalProbability: 0.45,
     minDurationSeconds: 1.2,

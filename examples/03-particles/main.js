@@ -12,6 +12,7 @@ var pathEntities = [];
 var selectedAirplaneIndex = 0;
 var cameraDistance = 500;
 var cameraHeightOffset = 200;
+var propellerDone = false;
 
 var particleSystems = [];
 var particleEffectKey = 'flame';
@@ -27,13 +28,7 @@ var trailAlignScratch = new Cesium.Cartesian3();
 var turbulenceScratch = new Cesium.Cartesian3();
 var turbulenceScratch2 = new Cesium.Cartesian3();
 
-var AIRPLANE_MODEL_URL = '../../assets/models/aircraft/aircraft_Animi.gltf';
-
-var LOCATIONS = {
-    dongfangmingzhu: { lon: 121.4998, lat: 31.2397, height: 600 },
-    dishuihu: { lon: 121.935, lat: 30.9, height: 600 },
-    chongmingdao: { lon: 121.75, lat: 31.52, height: 600 }
-};
+var AIRPLANE_MODEL_URL = '../../assets/models/beta-alia/beta_alia_vtol_aircraft.glb';
 
 var PARTICLE_PRESETS = {
     flame: {
@@ -178,10 +173,10 @@ function createAirplaneAndPath() {
 
     for (var i = 0; i <= numPoints; i++) {
         var angle = (i / numPoints) * Math.PI * 2;
-        var lon = LOCATIONS.dongfangmingzhu.lon + 0.015 * Math.cos(angle);
-        var lat = LOCATIONS.dongfangmingzhu.lat + 0.015 * Math.sin(angle) * 0.85;
+        var lon = dongfangmingzhu.lon + 0.015 * Math.cos(angle);
+        var lat = dongfangmingzhu.lat + 0.015 * Math.sin(angle) * 0.85;
         var time = Cesium.JulianDate.addSeconds(startTime, (i / numPoints) * duration, new Cesium.JulianDate());
-        var position = Cesium.Cartesian3.fromDegrees(lon, lat, LOCATIONS.dongfangmingzhu.height);
+        var position = Cesium.Cartesian3.fromDegrees(lon, lat, dongfangmingzhu.height);
         positionProperty1.addSample(time, position);
         pathPositions1.push(position);
     }
@@ -216,69 +211,18 @@ function createAirplaneAndPath() {
     });
     airplaneEntities.push(airplaneEntity);
 
-    // 航线2: 滴水湖到崇明岛往返
-    var numPoints2 = 1000;
-    var positionProperty2 = new Cesium.SampledPositionProperty();
-    positionProperty2.setInterpolationOptions({
-        interpolationDegree: 5,
-        interpolationAlgorithm: Cesium.LagrangePolynomialApproximation
-    });
-    var pathPositions2 = [];
-    var halfPoints = Math.floor(numPoints2 / 2);
-
-    for (var j = 0; j <= halfPoints; j++) {
-        var t = j / halfPoints;
-        var lon2 = LOCATIONS.dishuihu.lon + (LOCATIONS.chongmingdao.lon - LOCATIONS.dishuihu.lon) * t;
-        var lat2 = LOCATIONS.dishuihu.lat + (LOCATIONS.chongmingdao.lat - LOCATIONS.dishuihu.lat) * t;
-        var time2 = Cesium.JulianDate.addSeconds(startTime, (j / numPoints2) * duration, new Cesium.JulianDate());
-        var pos = Cesium.Cartesian3.fromDegrees(lon2, lat2, 800);
-        positionProperty2.addSample(time2, pos);
-        pathPositions2.push(pos);
-    }
-    for (var k = halfPoints; k <= numPoints2; k++) {
-        var t2 = (k - halfPoints) / (numPoints2 - halfPoints);
-        var lon3 = LOCATIONS.chongmingdao.lon + (LOCATIONS.dishuihu.lon - LOCATIONS.chongmingdao.lon) * t2;
-        var lat3 = LOCATIONS.chongmingdao.lat + (LOCATIONS.dishuihu.lat - LOCATIONS.chongmingdao.lat) * t2;
-        var time3 = Cesium.JulianDate.addSeconds(startTime, (k / numPoints2) * duration, new Cesium.JulianDate());
-        var pos2 = Cesium.Cartesian3.fromDegrees(lon3, lat3, 800);
-        positionProperty2.addSample(time3, pos2);
-        pathPositions2.push(pos2);
-    }
-
-    var pathEntity2 = viewer.entities.add({
-        name: '滴水湖到崇明岛 - 航线',
-        polyline: {
-            positions: pathPositions2,
-            width: 3,
-            material: new Cesium.PolylineGlowMaterialProperty({
-                glowPower: 0.2,
-                color: Cesium.Color.fromCssColorString('#4ECDC4').withAlpha(0.8)
-            }),
-            clampToGround: false
-        }
-    });
-    pathEntities.push(pathEntity2);
-
-    var airplaneEntity2 = viewer.entities.add({
-        name: '滴水湖到崇明岛 - 飞机',
-        position: positionProperty2,
-        availability: new Cesium.TimeIntervalCollection([
-            new Cesium.TimeInterval({ start: startTime, stop: stopTime })
-        ]),
-        model: {
-            uri: AIRPLANE_MODEL_URL,
-            scale: 5,
-            minimumPixelSize: 50,
-            maximumScale: 100
-        },
-        orientation: new Cesium.VelocityOrientationProperty(positionProperty2)
-    });
-    airplaneEntities.push(airplaneEntity2);
+    // 禁用模型默认动画（后续手动设置螺旋桨转速）
+    airplaneEntity.model.runAnimations = false;
 }
 
 // === 每帧更新 ===
 function onFrameUpdate() {
     if (!airplaneEntities.length) return;
+
+    // 螺旋桨动画轮询
+    if (!propellerDone) {
+        pollPropellerSpeed();
+    }
 
     var currentAirplane = airplaneEntities[selectedAirplaneIndex];
     if (!currentAirplane) return;
@@ -297,6 +241,31 @@ function onFrameUpdate() {
     }
 
     updateParticleSystem(currentAirplane, currentTime);
+}
+
+// === 加速螺旋桨动画 ===
+function pollPropellerSpeed() {
+    var currentAirplane = airplaneEntities[selectedAirplaneIndex];
+    if (!currentAirplane) return;
+    var dataSource = viewer.dataSourceDisplay && viewer.dataSourceDisplay.defaultDataSource;
+    var visualizers = dataSource && dataSource._visualizers;
+    if (!visualizers) return;
+
+    for (var i = 0; i < visualizers.length; i++) {
+        var modelState = visualizers[i]._modelHash && visualizers[i]._modelHash[currentAirplane.id];
+        if (modelState && modelState.modelPrimitive && modelState.modelPrimitive.ready) {
+            var model = modelState.modelPrimitive;
+            if (model.activeAnimations.length > 0) {
+                model.activeAnimations.removeAll();
+            }
+            model.activeAnimations.addAll({
+                multiplier: 15.0,
+                loop: Cesium.ModelAnimationLoop.REPEAT
+            });
+            propellerDone = true;
+            return;
+        }
+    }
 }
 
 // === 信息面板 ===

@@ -5,6 +5,7 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 
 let viewer;
 let airplaneEntity;
+let propellerDone = false;
 
 // === 启动 ===
 document.addEventListener('DOMContentLoaded', async function () {
@@ -20,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             name: '东方明珠环线'
         });
         airplaneEntity = flight.airplaneEntity;
+
+        // 禁用模型默认动画（后续手动设置螺旋桨转速）
+        airplaneEntity.model.runAnimations = false;
 
         // 3. 附加尾部预警特效
         TailEffect.attach(viewer, airplaneEntity);
@@ -55,6 +59,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 // === 每帧更新 ===
 function onFrameUpdate() {
+    // 螺旋桨动画轮询
+    if (!propellerDone) {
+        pollPropellerSpeed();
+    }
+
     var currentTime = viewer.clock.currentTime;
     var isAbnormal = TailEffect.isAbnormal(airplaneEntity, currentTime);
 
@@ -71,6 +80,29 @@ function onFrameUpdate() {
     FlightTracker.update(currentTime, {
         systemStatus: isAbnormal ? '异常告警' : '正常'
     });
+}
+
+// === 加速螺旋桨动画 ===
+function pollPropellerSpeed() {
+    var dataSource = viewer.dataSourceDisplay && viewer.dataSourceDisplay.defaultDataSource;
+    var visualizers = dataSource && dataSource._visualizers;
+    if (!visualizers) return;
+
+    for (var i = 0; i < visualizers.length; i++) {
+        var modelState = visualizers[i]._modelHash && visualizers[i]._modelHash[airplaneEntity.id];
+        if (modelState && modelState.modelPrimitive && modelState.modelPrimitive.ready) {
+            var model = modelState.modelPrimitive;
+            if (model.activeAnimations.length > 0) {
+                model.activeAnimations.removeAll();
+            }
+            model.activeAnimations.addAll({
+                multiplier: 15.0,
+                loop: Cesium.ModelAnimationLoop.REPEAT
+            });
+            propellerDone = true;
+            return;
+        }
+    }
 }
 
 // === 事件监听 ===

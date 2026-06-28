@@ -1,10 +1,11 @@
-/*== 01-flight-rounded — 编排层（圆角矩形航线 + 转弯倾斜 + ENU 跟随） ==*/
+/*== 01-flight-rounded — 编排层（圆角矩形航线 + 转弯倾斜 + 螺旋桨动画 + ENU 跟随） ==*/
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0OTAzZDRkZi00ODkyLTQ5OTUtOGE1MC1jN2JmNjc0ODdiOGUiLCJpZCI6MzMxMzk2LCJpYXQiOjE3NTUwNDgwNTV9.GH-UECFbXsiJip__VTu2oXoBmx8dt61E52q3rBakZyI';
 
 var viewer;
 var airplaneEntity;
 var positionProperty;
+var propellerDone = false;
 
 // === 启动 ===
 document.addEventListener('DOMContentLoaded', async function () {
@@ -20,6 +21,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         airplaneEntity = flight.airplaneEntity;
         positionProperty = flight.positionProperty;
 
+        // 禁用模型默认动画（后续手动设置螺旋桨转速）
+        airplaneEntity.model.runAnimations = false;
+
         // 3. 初始化飞行追踪器（ENU 模式 + 近距离 + banking 航向）
         FlightTracker.init(viewer, {
             cameraMode: 'enu',
@@ -30,15 +34,15 @@ document.addEventListener('DOMContentLoaded', async function () {
                 return attitude ? attitude.heading : 0;
             }
         });
-        FlightTracker.setAirplane(airplaneEntity, '东方明珠圆角四边形环线 - 飞机');
+        FlightTracker.setAirplane(airplaneEntity, '东方明珠圆角四边形环线');
 
-        // 5. 设置交互事件
+        // 4. 设置交互事件
         setupEventListeners();
 
-        // 6. 每帧更新循环
+        // 5. 每帧更新循环
         viewer.scene.preRender.addEventListener(onFrameUpdate);
 
-        // 7. 飞往总览视角
+        // 6. 飞往总览视角
         SceneManager.flyTo(
             Cesium.Cartesian3.fromDegrees(121.4998, 31.2097, 3000),
             { heading: Cesium.Math.toRadians(0), pitch: Cesium.Math.toRadians(-40), roll: 0 }
@@ -59,9 +63,37 @@ document.addEventListener('DOMContentLoaded', async function () {
 
 // === 每帧更新 ===
 function onFrameUpdate() {
+    // 螺旋桨动画轮询
+    if (!propellerDone) {
+        pollPropellerSpeed();
+    }
+
     FlightTracker.update(viewer.clock.currentTime, {
         systemStatus: '正常'
     });
+}
+
+// === 加速螺旋桨动画 ===
+function pollPropellerSpeed() {
+    var dataSource = viewer.dataSourceDisplay && viewer.dataSourceDisplay.defaultDataSource;
+    var visualizers = dataSource && dataSource._visualizers;
+    if (!visualizers) return;
+
+    for (var i = 0; i < visualizers.length; i++) {
+        var modelState = visualizers[i]._modelHash && visualizers[i]._modelHash[airplaneEntity.id];
+        if (modelState && modelState.modelPrimitive && modelState.modelPrimitive.ready) {
+            var model = modelState.modelPrimitive;
+            if (model.activeAnimations.length > 0) {
+                model.activeAnimations.removeAll();
+            }
+            model.activeAnimations.addAll({
+                multiplier: 15.0,
+                loop: Cesium.ModelAnimationLoop.REPEAT
+            });
+            propellerDone = true;
+            return;
+        }
+    }
 }
 
 // === 事件监听 ===

@@ -22,18 +22,9 @@ const SITE_CONFIG = {
       title: '圆角四边形航线',
       category: '飞行航线',
       categoryOrder: 1,
-      description: '圆角矩形航线配合转弯倾斜姿态，ENU 近距相机跟随',
+      description: '圆角矩形航线配合转弯倾斜姿态与螺旋桨动画，ENU 近距相机跟随',
       tags: ['RoundedFlightPath', 'FlightTracker', 'Banking'],
       path: './examples/01-flight-rounded/'
-    },
-    {
-      id: '01-flight-vtol',
-      title: 'VTOL 倾转旋翼机',
-      category: '飞行航线',
-      categoryOrder: 1,
-      description: '使用 Beta Alia VTOL 倾转旋翼机模型替换默认飞机',
-      tags: ['RoundedFlightPath', 'VTOL', 'GLB'],
-      path: './examples/01-flight-vtol/'
     },
     {
       id: '02-airspace',

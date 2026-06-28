@@ -55,10 +55,7 @@ open http://localhost:8080
 围绕东方明珠的圆形闭合航线飞行动画，展示航线绘制、飞机实体创建与尾部预警特效
 
 **01-flight-rounded** — 圆角四边形航线
-圆角矩形航线配合转弯倾斜姿态 (banking)，ENU 局部坐标系精确相机跟随
-
-**01-flight-vtol** — VTOL 倾转旋翼机
-使用 Beta Alia VTOL 倾转旋翼机模型替换默认飞机，含螺旋桨加速动画
+圆角矩形航线配合转弯倾斜姿态与螺旋桨动画，ENU 局部坐标系精确相机跟随
 
 </td>
 <td width="50%">
@@ -71,7 +68,7 @@ open http://localhost:8080
 ### 🔥 粒子特效
 
 **03-particles** — 飞机粒子特效
-双飞机航线上的粒子效果展示，支持火焰 / 烟雾 / 气流三种效果切换与强度调节
+飞机航线上的粒子效果展示，支持火焰 / 烟雾 / 气流三种效果切换与强度调节
 
 ### ⛈️ 天气模拟
 
@@ -117,13 +114,11 @@ shared/
 │   ├── home.png                  ← 封面图
 │   ├── images/
 │   └── models/
-│       ├── aircraft/               ← 飞机模型
-│       ├── beta-alia/            ← VTOL 模型
+│       ├── beta-alia/            ← 飞机模型
 │       └── weather/              ← 云模型
 ├── examples/
 │   ├── 01-flight-basic/
 │   ├── 01-flight-rounded/
-│   ├── 01-flight-vtol/
 │   ├── 02-airspace/
 │   ├── 03-particles/
 │   ├── 04-weather/
